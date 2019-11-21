@@ -4,32 +4,32 @@ bool linkAlreadyTalking;
 
 int ShowString(int string, int type, int style, float x, float y)
 {
-    int stringID=Tango_GetFreeString(type);
-    if(stringID==TANGO_INVALID)
+    int slot=Tango_GetFreeSlot(type);
+    if(slot==TANGO_INVALID)
         return TANGO_INVALID;
     
-    Tango_ClearString(stringID);
-    Tango_SetString(stringID, string);
-    Tango_SetStringStyle(stringID, style);
-    Tango_SetStringPosition(stringID, x, y);
-    Tango_ActivateString(stringID);
+    Tango_ClearSlot(slot);
+    Tango_LoadString(slot, string);
+    Tango_SetSlotStyle(slot, style);
+    Tango_SetSlotPosition(slot, x, y);
+    Tango_ActivateSlot(slot);
     
-    return stringID;
+    return slot;
 }
 
 int ShowMessage(int message, int type, int style, float x, float y)
 {
-    int stringID=Tango_GetFreeString(type);
-    if(stringID==TANGO_INVALID)
+    int slot=Tango_GetFreeSlot(type);
+    if(slot==TANGO_INVALID)
         return TANGO_INVALID;
     
-    Tango_ClearString(stringID);
-    Tango_SetMessage(stringID, message);
-    Tango_SetStringStyle(stringID, style);
-    Tango_SetStringPosition(stringID, x, y);
-    Tango_ActivateString(stringID);
+    Tango_ClearSlot(slot);
+    Tango_LoadMessage(slot, message);
+    Tango_SetSlotStyle(slot, style);
+    Tango_SetSlotPosition(slot, x, y);
+    Tango_ActivateSlot(slot);
     
-    return stringID;
+    return slot;
 }
 
 // Used by NPCs.

@@ -1,0 +1,219 @@
+// tango.zh
+// Beta 1
+
+
+// Functions for the user's use that don't really fit elsewhere.
+
+
+float Tango_D[8];
+
+
+void Tango_Start()
+{
+    Tango_InitializeMenu();
+    for(int i=0; i<__TANGO_NUM_SLOTS; i++)
+        Tango_ClearSlot(i);
+    
+    __Tango_Data[__TDIDX_SCREEN_FREEZE]=0;
+}
+
+void Tango_ClearSlot(int slot)
+{
+    if(!__Tango_ValidateSlot(slot))
+        return;
+    
+    // Decrement the freeze counter if necessary.
+    if(Tango_SlotIsActive(slot))
+    {
+        int flags=Tango_GetSlotStyleAttribute(slot, TANGO_STYLE_FLAGS);
+        if((flags&TANGO_FLAG_FREEZE_SCREEN)!=0)
+            __Tango_DecScreenFreeze();
+    }
+        
+    
+    int dataStart=slot*__TANGO_SIZEOF_DATA;
+    int defStart=slot*__TANGO_SIZEOF_SLOTDEF;
+    int pos=__Tango_SlotDefs[defStart+__TSDEF_START];
+    
+    __Tango_Buffer [pos]=NULL;
+    
+    __Tango_SlotData[dataStart+__TSDIDX_STYLE]=TANGO_INVALID;
+    __Tango_SlotData[dataStart+__TSDIDX_STATE]=__TANGO_STATE_INACTIVE;
+    __Tango_SlotData[dataStart+__TSDIDX_POSITION]=pos;
+    __Tango_SlotData[dataStart+__TSDIDX_CHAR_X]=__Tango_SlotDefs[defStart+__TSDEF_X];
+    __Tango_SlotData[dataStart+__TSDIDX_CHAR_Y]=__Tango_SlotDefs[defStart+__TSDEF_Y];
+    __Tango_SlotData[dataStart+__TSDIDX_SCREEN_X]=0;
+    __Tango_SlotData[dataStart+__TSDIDX_SCREEN_Y]=0;
+    __Tango_SlotData[dataStart+__TSDIDX_CSET]=TANGO_DEFAULT;
+    __Tango_SlotData[dataStart+__TSDIDX_COLOR]=TANGO_DEFAULT;
+    __Tango_SlotData[dataStart+__TSDIDX_SPEED]=TANGO_DEFAULT;
+    __Tango_SlotData[dataStart+__TSDIDX_SFX]=TANGO_DEFAULT;
+    __Tango_SlotData[dataStart+__TSDIDX_OFFSET]=0;
+    __Tango_SlotData[dataStart+__TSDIDX_SCROLLING]=0;
+    __Tango_SlotData[dataStart+__TSDIDX_NEXT_STRING]=0;
+    __Tango_SlotData[dataStart+TANGO_VAR_A0]=0;
+    __Tango_SlotData[dataStart+TANGO_VAR_A1]=0;
+    
+    if(Tango_MenuIsActive() && slot==__Tango_Data[__TDIDX_MENU_SLOT])
+        __Tango_MenuCancel();
+}
+
+bool Tango_ReserveSlot(int slot)
+{
+    if(!__Tango_ValidateSlot(slot))
+        return false;
+    
+    int dataStart=slot*__TANGO_SIZEOF_DATA;
+    
+    if(__Tango_SlotData[dataStart+__TSDIDX_STATE]==__TANGO_STATE_INACTIVE)
+    {
+        __Tango_SlotData[dataStart+__TSDIDX_STATE]=__TANGO_STATE_RESERVED;
+        return true;
+    }
+    
+    return false;
+}
+
+void Tango_SetSlotPosition(int slot, int x, int y)
+{
+    if(!__Tango_ValidateSlot(slot))
+        return;
+    
+    int dataStart=slot*__TANGO_SIZEOF_DATA;
+    
+    // If this slot's got a menu, its choices need to be moved first.
+    if(__Tango_Data[__TDIDX_MENU_SLOT]==slot)
+    {
+        int diffX=x-__Tango_SlotData[dataStart+__TSDIDX_SCREEN_X];
+        int diffY=y-__Tango_SlotData[dataStart+__TSDIDX_SCREEN_Y];
+        __Tango_ShiftMenu(diffX, diffY);
+    }
+    
+    __Tango_SlotData[dataStart+__TSDIDX_SCREEN_X]=x;
+    __Tango_SlotData[dataStart+__TSDIDX_SCREEN_Y]=y;
+}
+
+void Tango_ActivateSlot(int slot)
+{
+    if(!__Tango_ValidateSlot(slot))
+        return;
+    
+    int dataStart=slot*__TANGO_SIZEOF_DATA;
+    
+    // Don't do anything if the slot's active already
+    if(__Tango_SlotData[dataStart+__TSDIDX_STATE]==__TANGO_STATE_INACTIVE ||
+       __Tango_SlotData[dataStart+__TSDIDX_STATE]==__TANGO_STATE_RESERVED)
+    {
+        __Tango_SlotData[dataStart+__TSDIDX_STATE]=__TANGO_STATE_ACTIVE;
+        
+        // Clear the text drawing area
+        __Tango_ClearSlotBitmap(slot);
+        Screen->SetRenderTarget(RT_SCREEN);
+        
+        // Freeze the screen if necessary.
+        int flags=Tango_GetSlotStyleAttribute(slot, TANGO_STYLE_FLAGS);
+        if((flags&TANGO_FLAG_FREEZE_SCREEN)!=0)
+            __Tango_IncScreenFreeze();
+    }
+}
+
+bool Tango_SlotIsActive(int slot)
+{
+    if(!__Tango_ValidateSlot(slot))
+        return false;
+    
+    int dataStart=slot*__TANGO_SIZEOF_DATA;
+    int state=__Tango_SlotData[dataStart+__TSDIDX_STATE];
+    if(state==__TANGO_STATE_INACTIVE ||
+       state==__TANGO_STATE_RESERVED)
+        return false;
+    return true;
+}
+
+int Tango_GetFreeSlot(int type)
+{
+    for(int i=0; i<__TANGO_NUM_SLOTS; i++)
+    {
+        if(__Tango_SlotData[i*__TANGO_SIZEOF_DATA+__TSDIDX_STATE]!=__TANGO_STATE_INACTIVE)
+            continue;
+        
+        if(__Tango_SlotDefs[i*__TANGO_SIZEOF_SLOTDEF+__TSDEF_TYPE]==type ||
+           type==TANGO_SLOT_ANY)
+            return i;
+    }
+    
+    return TANGO_INVALID;
+}
+
+int Tango_GetFreeSlot()
+{
+    return Tango_GetFreeSlot(TANGO_SLOT_ANY);
+}
+
+float Tango_GetSlotVar(int slot, int what)
+{
+    if(__Tango_ValidateSlot(slot))
+        return __Tango_SlotData[slot*__TANGO_SIZEOF_DATA+what];
+    return TANGO_INVALID;
+}
+
+void Tango_SetSlotVar(int slot, int what, float value)
+{
+    if(__Tango_ValidateSlot(slot))    
+        __Tango_SlotData[slot*__TANGO_SIZEOF_DATA+what]=value;
+}
+
+void Tango_Sync(int value)
+{
+    while(true)
+    {
+        if(__Tango_FindSyncingStrings(value))
+            return;
+        Waitframe();
+    }
+}
+
+float Tango_ConvertFunctionName(int name)
+{
+    float accumulator=0;
+    int character;
+    int pos;
+    
+    // Find the value
+    for(pos=0; name[pos]!=NULL && pos<31; pos++)
+    {
+        character=name[pos];
+        
+        if(character>='a' && character<='z')
+        {
+            accumulator*=__TANGO_CODE_FACTOR;
+            accumulator+=(character+1-'a')/10000;
+        }
+        else if(character>='0' && character<='9' && pos>0)
+        {
+            accumulator*=__TANGO_CODE_FACTOR;
+            accumulator+=(character+27-'0')/10000;
+        }
+        else
+            return -1;
+    }
+    
+    // Print the constant
+    int upperName[32];
+    
+    for(pos=0; pos<31; pos++)
+    {
+        upperName[pos]=LowerToUpper(name[pos]);
+        if(name[pos]==NULL)
+            break;
+    }
+    
+    upperName[31]=NULL; // Probably unnecessary
+    
+    int format[]="const float FUNC_%s = %s;\n";
+    int valueBuf[13];
+    __Tango_FloatToASCII(valueBuf, accumulator, true);
+    printf(format, upperName, valueBuf);
+    
+    return accumulator;
+}

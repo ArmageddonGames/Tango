@@ -6,6 +6,7 @@ const int STYLE_JAPANESE = 2;
 const int STYLE_POPUP = 3;
 const int STYLE_ZELDA = 4;
 const int STYLE_LINK = 5;
+const int STYLE_CURRENT_COLOR = 6;
 
 int zeldaFrame[]= {
     TANGO_DRAW_RECT_TRANS,
@@ -51,13 +52,14 @@ void SetUpStyles()
     SetUpNaviStyle();
     SetUpJapaneseStyle();
     SetUpPopupStyle();
+    SetUpCurrentColorStyle();
     SetUpZeldaStyle();
     SetUpLinkStyle();
 }
 
 void SetUpPlainStyle()
 {
-    Tango_SetStyleAttribute(STYLE_PLAIN, TANGO_STYLE_BACKDROP_TYPE, TANGO_BACKDROP_IMAGE);
+    Tango_SetStyleAttribute(STYLE_PLAIN, TANGO_STYLE_BACKDROP_TYPE, TANGO_BACKDROP_TILE);
     Tango_SetStyleAttribute(STYLE_PLAIN, TANGO_STYLE_BACKDROP_TILE, 1126);
     Tango_SetStyleAttribute(STYLE_PLAIN, TANGO_STYLE_BACKDROP_CSET, 8);
     Tango_SetStyleAttribute(STYLE_PLAIN, TANGO_STYLE_BACKDROP_WIDTH, 10);
@@ -91,7 +93,7 @@ void SetUpPlainStyle()
 
 void SetUpNaviStyle()
 {
-    Tango_SetStyleAttribute(STYLE_NAVI, TANGO_STYLE_BACKDROP_TYPE, TANGO_BACKDROP_IMAGE);
+    Tango_SetStyleAttribute(STYLE_NAVI, TANGO_STYLE_BACKDROP_TYPE, TANGO_BACKDROP_TILE);
     Tango_SetStyleAttribute(STYLE_NAVI, TANGO_STYLE_BACKDROP_TILE, 1140);
     Tango_SetStyleAttribute(STYLE_NAVI, TANGO_STYLE_BACKDROP_CSET, 0);
     Tango_SetStyleAttribute(STYLE_NAVI, TANGO_STYLE_BACKDROP_WIDTH, 6);
@@ -112,11 +114,11 @@ void SetUpNaviStyle()
 
 void SetUpJapaneseStyle()
 {
-    Tango_SetStyleAttribute(STYLE_JAPANESE, TANGO_STYLE_BACKDROP_TYPE, TANGO_BACKDROP_IMAGE);
+    Tango_SetStyleAttribute(STYLE_JAPANESE, TANGO_STYLE_BACKDROP_TYPE, TANGO_BACKDROP_TILE);
     Tango_SetStyleAttribute(STYLE_JAPANESE, TANGO_STYLE_BACKDROP_TILE, 1206);
-    Tango_SetStyleAttribute(STYLE_JAPANESE, TANGO_STYLE_BACKDROP_CSET, 7);
     Tango_SetStyleAttribute(STYLE_JAPANESE, TANGO_STYLE_BACKDROP_WIDTH, 8);
     Tango_SetStyleAttribute(STYLE_JAPANESE, TANGO_STYLE_BACKDROP_HEIGHT, 4);
+    // Skipped CSet because it's 8-bit
     
     Tango_SetStyleAttribute(STYLE_JAPANESE, TANGO_STYLE_TEXT_FONT, FONT_JAPANESE);
     Tango_SetStyleAttribute(STYLE_JAPANESE, TANGO_STYLE_TEXT_X, 10);
@@ -209,4 +211,24 @@ void SetUpLinkStyle()
     Tango_SetStyleAttribute(STYLE_LINK, TANGO_STYLE_MORE_CSET, 10);
     Tango_SetStyleAttribute(STYLE_LINK, TANGO_STYLE_MORE_X, 220);
     Tango_SetStyleAttribute(STYLE_LINK, TANGO_STYLE_MORE_Y, 64);
+}
+
+void SetUpCurrentColorStyle()
+{
+    Tango_SetStyleAttribute(STYLE_CURRENT_COLOR, TANGO_STYLE_BACKDROP_TYPE, TANGO_BACKDROP_TILE);
+    Tango_SetStyleAttribute(STYLE_CURRENT_COLOR, TANGO_STYLE_BACKDROP_TILE, 1255);
+    Tango_SetStyleAttribute(STYLE_CURRENT_COLOR, TANGO_STYLE_BACKDROP_CSET, 5);
+    Tango_SetStyleAttribute(STYLE_CURRENT_COLOR, TANGO_STYLE_BACKDROP_WIDTH, 5);
+    Tango_SetStyleAttribute(STYLE_CURRENT_COLOR, TANGO_STYLE_BACKDROP_HEIGHT, 2);
+    
+    Tango_SetStyleAttribute(STYLE_CURRENT_COLOR, TANGO_STYLE_TEXT_FONT, FONT_ORACLE_EXTENDED);
+    Tango_SetStyleAttribute(STYLE_CURRENT_COLOR, TANGO_STYLE_TEXT_X, 8);
+    Tango_SetStyleAttribute(STYLE_CURRENT_COLOR, TANGO_STYLE_TEXT_Y, 8);
+    Tango_SetStyleAttribute(STYLE_CURRENT_COLOR, TANGO_STYLE_TEXT_WIDTH, 64);
+    Tango_SetStyleAttribute(STYLE_CURRENT_COLOR, TANGO_STYLE_TEXT_HEIGHT, 16);
+    Tango_SetStyleAttribute(STYLE_CURRENT_COLOR, TANGO_STYLE_TEXT_CSET, 0);
+    Tango_SetStyleAttribute(STYLE_CURRENT_COLOR, TANGO_STYLE_TEXT_COLOR, 1);
+    
+    Tango_SetStyleAttribute(STYLE_CURRENT_COLOR, TANGO_STYLE_FLAGS,
+        TANGO_FLAG_INSTANTANEOUS | TANGO_FLAG_PERSISTENT | TANGO_FLAG_CENTERED);
 }

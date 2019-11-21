@@ -4,10 +4,10 @@
 int FONT_JAPANESE[] = {
     TANGO_FONT_CUSTOM,
     TANGO_FONT_MONOSPACE,
-    1040, // Starting tile
-    14,   // Character height
-    0,    // Space between lines
     0,    // Unused
+    1040, // Starting tile
+    12,   // Character height
+    2,    // Space between lines
     12    // Character width
 };
 

@@ -1,12 +1,15 @@
-// "Oracle Proportional" extended with an A button icon and
+// tango.zh font definition for built-in font "Oracle Proportional"
 
-int FONT_ORACLE_EXTENDED[] = {
-    TANGO_FONT_BUILTIN_EXTENDED,
+int TANGO_FONT_ORACLE_PROPORTIONAL[] = {
+    TANGO_FONT_BUILTIN,
     TANGO_FONT_PROPORTIONAL,
     FONT_GBORACLEP,
-    1062, // Start of extensions
-    15,   // Character height
-    0,    // Space between lines
+    0,  // Unused
+    15, // Character height
+    0,  // Space between lines
+    
+    // Character widths, including any trailing space
+    // ASCII characters 32 to 126
     
     // sp !  "  #  $  %  &  '  (  )  *  +  ,  -  .  /
        5, 3, 6, 8, 6, 8, 8, 3, 4, 4, 6, 6, 3, 7, 3, 7,
@@ -35,11 +38,5 @@ int FONT_ORACLE_EXTENDED[] = {
        8, 5, 6, 4, 4, 4, 6, 7, 3, 4, 3, 5, 7, 8, 8, 9, 7, 7, 7, 7, 7, 7, 7, 7,
        7, 7, 7, 7, 7, 4, 4, 4, 4, 8, 7, 7, 7, 7, 7, 7, 5, 7, 7, 7, 7, 7, 8, 6,
        7, 7, 7, 7, 7, 7, 7, 7, 6, 6, 6, 6, 6, 4, 4, 4, 4, 6, 7, 6, 6, 6, 7, 6,
-       6, 6, 6, 6, 6, 7, 6, 5, 6,
-    
-    // Extended font characters
-    
-    // A button icon (black)
-    12
+       6, 6, 6, 6, 6, 7, 6, 5, 6
 };
-

@@ -15,7 +15,10 @@ ffc script PickAColor
     
     void GetColorChoice(int message)
     {
-        int stringID;
+        int talkSlot;
+        int choiceSlot=TANGO_INVALID;
+        int currentChoice;
+        int lastChoice=-1;
         
         int purple[]="purple";
         int orange[]="orange";
@@ -25,29 +28,41 @@ ffc script PickAColor
         int choiceY[]={ 80, 96, 112 };
         int choiceStrings[]={ purple, orange, blue };
         
-        Tango_D[0]=0;
-        stringID=ShowMessage(message, TANGO_STRING_NORMAL, STYLE_PLAIN, 32, 32);
+        talkSlot=ShowMessage(message, TANGO_SLOT_NORMAL, STYLE_PLAIN, 32, 32);
         
-        // The menu needs to be initialized before the string
-        // gets to @waituntil(@chosen)
+        // The string will call @sync(1) when the menu should start
+        Tango_Sync(1);
+        
         Tango_InitializeMenu();
         Tango_SetMenuCursor(706, 0, 2, 2);
-        Tango_SetMenuSFX(66, 67);
+        Tango_SetMenuSFX(66, 67, 0);
         for(int i=0; i<3; i++)
             Tango_AddMenuChoice(i+1, choiceX[i], choiceY[i]);
         
-        // The string will set Tango_D[0] to 1 when the menu should start
-        while(Tango_D[0]==0)
-            Waitframe();
         Tango_ActivateMenu(false);
         while(Tango_MenuIsActive())
+        {
+            currentChoice=Tango_GetCurrentMenuChoice()-1;
+            if(currentChoice!=lastChoice)
+            {
+                if(choiceSlot!=TANGO_INVALID)
+                    Tango_ClearSlot(choiceSlot);
+                choiceSlot=ShowString(choiceStrings[currentChoice],
+                                      TANGO_SLOT_NORMAL, STYLE_CURRENT_COLOR,
+                                      72, 104);
+                lastChoice=currentChoice;
+            }
             Waitframe();
+        }
+        
+        if(choiceSlot!=TANGO_INVALID)
+            Tango_ClearSlot(choiceSlot);
         
         // Load the value to pass to @string
-        Tango_SetStringData(stringID, TANGO_DATA_A0,
-                            choiceStrings[Tango_GetLastMenuChoice()-1]);
+        Tango_SetSlotVar(talkSlot, TANGO_VAR_A0,
+                          choiceStrings[Tango_GetLastMenuChoice()-1]);
         
-        while(Tango_StringIsVisible(stringID))
+        while(Tango_SlotIsActive(talkSlot))
             Waitframe();
     }
 }

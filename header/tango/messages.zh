@@ -1,0 +1,21 @@
+// tango.zh
+// Beta 1
+
+
+// Different types of messages that might be logged.
+
+const int __TANGO_MSG_LOAD_START = 1;
+const int __TANGO_MSG_LOAD_END = 2;
+
+const int __TANGO_ERROR_OVERFLOW = 1;
+const int __TANGO_ERROR_INVALID_CHARACTER = 2;
+const int __TANGO_ERROR_UNDEFINED_FUNCTION = 3;
+const int __TANGO_ERROR_TOO_MANY_ARGS = 4;
+const int __TANGO_ERROR_INVALID_STYLE = 5;
+const int __TANGO_ERROR_INVALID_SLOT = 6;
+const int __TANGO_ERROR_INVALID_FUNCTION = 7;
+const int __TANGO_ERROR_INVALID_CHARACTER_CODE = 8;
+const int __TANGO_ERROR_INVALID_ARGUMENT = 9;
+const int __TANGO_ERROR_INVALID_STRING_ARG = 10;
+const int __TANGO_ERROR_LOAD_INVALID_STRING = 11;
+const int __TANGO_ERROR_LOAD_INVALID_MESSAGE = 12;

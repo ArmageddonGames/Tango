@@ -5,35 +5,35 @@ ffc script Zelda
     void run(int message1, int message2)
     {
         bool talking=false;
-        int stringID1;
-        int stringID2;
+        int slot1;
+        int slot2;
         
         while(true)
         {
             if(!talking && !linkAlreadyTalking && LinkWantsToTalk(this))
             {
                 // Get a string
-                stringID1=Tango_GetFreeString(TANGO_STRING_NORMAL);
-                if(stringID1==TANGO_INVALID)
+                slot1=Tango_GetFreeSlot(TANGO_SLOT_NORMAL);
+                if(slot1==TANGO_INVALID)
                     continue;
                 
                 // Reserve it so the next call to Tango_GetFreeString()
                 // doesn't return the same one
-                Tango_ReserveString(stringID1);
+                Tango_ReserveSlot(slot1);
                 
                 // Get another one
-                stringID2=Tango_GetFreeString(TANGO_STRING_NORMAL);
-                if(stringID2==TANGO_INVALID)
+                slot2=Tango_GetFreeSlot(TANGO_SLOT_NORMAL);
+                if(slot2==TANGO_INVALID)
                     continue;
                 
                 talking=true;
                 linkAlreadyTalking=true;
-                ShowMessages(stringID1, stringID2, message1, message2);
+                ShowMessages(slot1, slot2, message1, message2);
             }
             
             if(talking)
             {
-                talking=Tango_StringIsVisible(stringID1);
+                talking=Tango_SlotIsActive(slot1);
                 if(!talking)
                     linkAlreadyTalking=false;
             }
@@ -42,18 +42,18 @@ ffc script Zelda
         }
     }
     
-    void ShowMessages(int stringID1, int stringID2, int message1, int message2)
+    void ShowMessages(int slot1, int slot2, int message1, int message2)
     {
-        Tango_ClearString(stringID1);
-        Tango_SetMessage(stringID1, message1);
-        Tango_SetStringStyle(stringID1, STYLE_ZELDA);
-        Tango_SetStringPosition(stringID1, 16, 8);
-        Tango_ActivateString(stringID1);
+        Tango_ClearSlot(slot1);
+        Tango_LoadMessage(slot1, message1);
+        Tango_SetSlotStyle(slot1, STYLE_ZELDA);
+        Tango_SetSlotPosition(slot1, 16, 8);
+        Tango_ActivateSlot(slot1);
         
-        Tango_ClearString(stringID2);
-        Tango_SetMessage(stringID2, message2);
-        Tango_SetStringStyle(stringID2, STYLE_LINK);
-        Tango_SetStringPosition(stringID2, 16, 90);
-        Tango_ActivateString(stringID2);
+        Tango_ClearSlot(slot2);
+        Tango_LoadMessage(slot2, message2);
+        Tango_SetSlotStyle(slot2, STYLE_LINK);
+        Tango_SetSlotPosition(slot2, 16, 90);
+        Tango_ActivateSlot(slot2);
     }
 }

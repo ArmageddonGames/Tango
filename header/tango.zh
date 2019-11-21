@@ -10,10 +10,10 @@ const int __TANGO_SCROLL_SPEED = 4;
 const int __TANGO_SPEEDUP_FACTOR = 5;
 
 // Whether holding A or B speeds up test scrolling
-const int __TANGO_SCROLL_SPEEDUP = 0;
+const int __TANGO_SCROLL_SPEEDUP = 1;
 
 // Whether a sound is played when a space is printed
-const int __TANGO_SFX_ON_SPACE = 0;
+const int __TANGO_SFX_ON_SPACE = 1;
 
 // Whether there's a delay before a space, as with printable characters
 const int __TANGO_DELAY_ON_SPACE = 1;
@@ -47,21 +47,12 @@ const int __TANGO_MAX_STRING_FUNC_LENGTH = 16;
 // Advanced settings -----------------------------------------------------------
 
 // Custom functions
-const int FUNC_PORTRAIT = 1529.8275;
-
 int __Tango_CustomFunctions[] = {
-    FUNC_PORTRAIT
+    0 // Placeholder - remove this when you add a function
 };
 
 float __Tango_RunCustomFunction(float function, float args)
 {
-    if(function==FUNC_PORTRAIT)
-    {
-        // zeldaFrame[8] is Zelda's portrait tile
-        zeldaFrame[8]=args[0];
-        return 0;
-    }
-    
     return 0;
 }
 
@@ -69,50 +60,34 @@ const int __TANGO_MAX_MENU_ITEMS = 4;
 float __Tango_Data[37]; // 25+3*__TANGO_MAX_MENU_ITEMS
 
 // Available styles
-const int __TANGO_NUM_STYLES = 7;
-int __Tango_Styles[182]; // __TANGO_SIZEOF_STYLE * __TANGO_NUM_STYLES
+const int __TANGO_NUM_STYLES = 4;
+int __Tango_Styles[104]; // __TANGO_SIZEOF_STYLE * __TANGO_NUM_STYLES
                          // __TANGO_SIZEOF_STYLE is currently 26
 
-// Text bufer and slots
-int __Tango_Buffer[1216]; // Arbitrary size
+// Text buffer and slots
+int __Tango_Buffer[1024]; // Arbitrary size
 
-const int __TANGO_NUM_SLOTS = 4;
-int __Tango_SlotData[68]; // __TANGO_SIZEOF_DATA * __TANGO_NUM_SLOTS
-                          // __TANGO_SIZEOF_DATA is currently 17
+const int __TANGO_NUM_SLOTS = 2;
+int __Tango_SlotData[34]; // __TANGO_SIZEOF_DATA * __TANGO_NUM_SLOTS
+                            // __TANGO_SIZEOF_DATA is currently 17
 
 // Slot types and definitions
-const int TANGO_SLOT_NAVI = 0;
-const int TANGO_SLOT_POPUP = 1;
-const int TANGO_SLOT_NORMAL = 2;
+const int TANGO_SLOT_NORMAL = 0;
 
 int __Tango_SlotDefs[] = {
     // 0
-    TANGO_SLOT_NAVI,
-    0,       // Starting index in __Tango_StringBuffer
-    64,      // Maximum length after processing
-    256, 0,  // X, Y on offscreen bitmap
-    128, 64, // Width, height on offscreen bitmap
+    TANGO_SLOT_NORMAL,
+    0,        // Starting index in __Tango_StringBuffer
+    512,      // Maximum length after processing
+    0, 0,     // X, Y on offscreen bitmap
+    256, 176, // Width, height on offscreen bitmap
     
     // 1
-    TANGO_SLOT_POPUP,
-    64,
-    128,
-    256, 64,
-    128, 64,
-    
-    // 2
     TANGO_SLOT_NORMAL,
-    195,
     512,
-    0, 0,
-    256, 256,
-    
-    // 3
-    TANGO_SLOT_NORMAL,
-    704,
     512,
-    0, 256,
-    256, 256
+    256, 0,
+    256, 176
 };
 
 

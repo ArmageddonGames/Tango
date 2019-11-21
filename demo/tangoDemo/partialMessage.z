@@ -1,6 +1,6 @@
-// Shows a message when Link talks to it.
+// NPC variant that prints only part of a message.
 
-ffc script NPC
+ffc script PartialMessage
 {
     void run(int message)
     {
@@ -11,11 +11,18 @@ ffc script NPC
         {
             if(!talking && !linkAlreadyTalking && LinkWantsToTalk(this))
             {
-                slot=ShowMessage(message, TANGO_SLOT_NORMAL, STYLE_PLAIN, 32, 32);
+                slot=Tango_GetFreeSlot(TANGO_SLOT_NORMAL);
+                
                 if(slot==TANGO_INVALID)
                     talking=false;
                 else
                 {
+                    Tango_ClearSlot(slot);
+                    Tango_LoadMessage(slot, message, '%');
+                    Tango_SetSlotStyle(slot, STYLE_PLAIN);
+                    Tango_SetSlotPosition(slot, 32, 32);
+                    Tango_ActivateSlot(slot);
+                    
                     talking=true;
                     linkAlreadyTalking=true;
                 }
