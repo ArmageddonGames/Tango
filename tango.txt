@@ -1,4 +1,4 @@
-tango.zh alpha 1
+tango.zh alpha 3
 
 
 ZScript
@@ -6,6 +6,11 @@ ZScript
 float Tango_D[8]
 Arbitrary data. Can be used to allow ZScript and string codes to communicate.
 
+
+Tango_Start()
+Tango_Update1()
+Tango_Update2()
+Global script functions.
 
 int Tango_GetFreeString()
 int Tango_GetFreeString(int stringType)
@@ -30,7 +35,7 @@ Get or set the style used by a string.
 void Tango_SetStringPosition(int stringID, int x, int y)
 Position a string on the screen.
 
-void Tango_DisplayString(int stringID)
+void Tango_ActivateString(int stringID)
 Display the string on the screen. Do this only after the text, style, and position.
 
 bool Tango_StringIsVisible(int stringID)
@@ -40,10 +45,12 @@ float Tango_GetStringData(int stringID, int what)
 void Tango_SetStringData(int stringID, int what, float value)
 Use to read or set a string's a[0] and a[1]. The what argument should be TANGO_DATA_A0 or TANGO_DATA_A1.
 
-int Tango_GetStringStyleAttribute(int stringID, int attribute)
+int Tango_GetStyleAttribute(int style, int attribute)
 void Tango_SetStyleAttribute(int style, int attribute, int value)
 Get or set a style attribute. Use the TANGO_STYLE arguments constants for the attribute argument.
 
+void Tango_ClearStyle(int styleID)
+Clear all data for a given style.
 
 Style attributes:
 TANGO_STYLE_BACKDROP_TYPE
@@ -84,7 +91,7 @@ Text position and size in pixels.
 TANGO_STYLE_TEXT_CSET
 TANGO_STYLE_TEXT_COLOR
 Text color. TANGO_STYLE_TEXT_COLOR is color 0-15 within the CSet.
-TANGO_STYLE_TEXT_COLOR only works for built-in font characters.
+TANGO_STYLE_TEXT_COLOR only applies to built-in font characters.
 
 TANGO_STYLE_TEXT_SPEED
 TANGO_STYLE_TEXT_SFX
@@ -96,6 +103,8 @@ Plays when a string finishes.
 TANGO_STYLE_CURSOR_COMBO
 TANGO_STYLE_CURSOR_CSET
 TANGO_STYLE_CURSOR_WIDTH
+TANGO_STYLE_CURSOR_MOVE_SFX
+TANGO_STYLE_CURSOR_SELECT_SFX
 Settings for the menu cursor.
 
 TANGO_STYLE_MORE_COMBO
@@ -118,13 +127,46 @@ One or more flags ORed together or 0 for none. Flags are:
     TANGO_FLAG_CARRY_OVER
     The string isn't cleared when the screen changes.
     
+    TANGO_FLAG_LINE_BY_LINE
+    Text is printed one line at a time instead of one character at a time.
+    
     TANGO_FLAG_BLOCK_INPUT
     All input will be canceled while this string is onscreen. This doesn't interfere with menus or the speedup flags.
+    Note: FFC scripts run before the global script. FFC scripts and anything before Tango_Update() in the global script will see the original input.
+
+void Tango_InitializeMenu()
+Clear all menu data.
+
+void Tango_SetMenuCursor(int combo, int cset)
+void Tango_SetMenuCursor(int combo, int cset, int width, int height)
+Set the combo to be used by the menu cursor. Width and height default to 1.
+
+void Tango_SetMenuSFX(int moveSound, int selectSound)
+Set the menu sounds.
+
+void Tango_AddMenuChoice(int value, int x, int y)
+Add a menu item with the given value at the given position. value should not be 0.
+
+void Tango_ActivateMenu()
+Activate the menu with the current settings.
+
+bool Tango_MenuIsActive()
+Returns true if a menu is currently active.
+
+int Tango_GetLastMenuChoice()
+Returns the last choice made in a menu. Returns 0 if a menu is currently active or no menu has been shown yet.
+
+void Tango_Sync(int value)
+Used to synchronize a script and a string. See @sync().
+
 
 
 String codes
 
+
+
 Flow control functions
+Note: these can not be nested.
 
 @while(a1 a2)
 a1: condition or number
@@ -132,9 +174,16 @@ a2: flow control or effect function
 Execute a2 as long as a1 is true. Runs once a frame.
 
 @if(a1 a2)
+@elseif(a1 a2)
+@else(a2)
 a1: condition or number
 a2: flow control or effect function
-Execute a2 if a1 is true.
+Execute a2 if a1 is true. @elseif and @else should come immediately after the corresponding @if; they are not guaranteed to work correctly, otherwise.
+
+@waituntil(a1)
+a1: condition or number
+Pauses the text until a1 is nonzero.
+
 
 
 Effect functions
@@ -142,8 +191,13 @@ These functions perform some function in the game or affect the string in a way 
 
 @set(a1 a2)
 a1: variable
-a2: variable or @default
+a2: number or @default
 Set a1 to a2.
+
+@increment(a1 a2)
+a1: variable
+a2: number
+Increase the value of a1 by a2.
 
 @playsfx(a1)
 a1: number
@@ -157,9 +211,31 @@ Appends another message to the end of the string. Useful if you run out of space
 a1: number
 Pauses the text for a1 frames. Speeding up the text will reduce the time accordingly.
 
-@waituntil(a1)
-a1: condition or number
-Pauses the text until a1 is nonzero.
+@pressa()
+Prompts the player to press A before the string continues.
+
+@next(a1)
+a1: number
+Sets the message with the given number to follow the current one. Equivalent to @set(@next a1)
+
+@goto(a1)
+a1: number
+Immediately ends the current string and switches to message a1.
+
+@sync(a1)
+@sync(a1 a2)
+a1: number
+a2: number
+This can be used to synchronize multiple strings or to synchronize a string and script. The first string to call @sync with one argument is suspended. When a second string calls it with the same argument, both strings continue processing. In other words, when two strings running simultaneously call @sync(5), the first one to reach that function will stop and wait for the other to catch up.
+If two arguments are used, any strings waiting for a1 will be resumed, but the current string will not stop if no other string is waiting for it. It will treat the second argument the same way it would a single one. This is almost the same as calling @sync(a1)@sync(a2), except the first call would never hang. This is convenient for synchronizing multiple strings.
+Tango_Sync() works in the same way. A call to Tango_Sync() will not return until a string calls @sync() with the same value. Do not count on this coordination being precisely timed; there may be a discrepancy of a frame or two.
+
+@tab(a1)
+a1: number
+Indents the text to a1 pixels. This may be left of the current position, causing the following text to be printed over earlier text.
+
+@close()
+Immediately deactivates the current string.
 
 
 Numeric functions
@@ -175,12 +251,14 @@ a1: number
 a2: number
 Returns a number between a1 and a2, inclusive.
 
+
+
 Text functions
 These functions insert text into the string.
 
 @char(a1)
 a1: number
-Inserts the character with the given number. Use for characters>=127 or line breaks (25).
+Inserts the character with the given number. Use for characters>=127 or line breaks (26).
 
 @number(a1)
 a1: number
@@ -192,6 +270,11 @@ Inserts a number as text followed by "st", "nd", "rd", or "th".
 
 @savename()
 Inserts the save file name.
+
+@string(a1)
+a1: number (ZScript string pointer)
+Inserts an arbitrary ZScript string. Functions in this string will not be executed.
+
 
 
 Condition functions
@@ -217,6 +300,21 @@ a1: number or condition
 a2: number or condition
 True if a1 is less than a2.
 
+@and(a1 a2)
+a1: number or condition
+a2: number or condition
+True if a1 and a2 are both nonzero.
+
+@or(a1 a2)
+a1: number or condition
+a2: number or condition
+True if at least one of a1 and a2 is nonzero.
+
+@not(a1)
+a1: number or condition
+True if a1 is zero, false otherwise.
+
+
 
 Menu functions
 Use these functions to set up a menu.
@@ -225,8 +323,13 @@ Use these functions to set up a menu.
 a1: number
 Creates a menu option with value a1. a1 should not be 0. You can add up to 4 options.
 
-@getchoice()
-Clears the last choice and activates the menu. This does not suspend text printing, so you probably want to add @waituntil(@chosen) afterward.
+@domenu(a1)
+a1: condition
+Activates the menu and suspends further processing until a selection is made. If a1 is true, the player can press B to cancel.
+
+@menuwait()
+Waits for a menu selection to be made. Don't use this together with @domenu(); it should be used when another string or a script will create the menu.
+
 
 
 Variables
@@ -255,17 +358,25 @@ The current text speed.
 Read/write
 The current text sound.
 
+@style
+Read/write
+The string's current style. You should only write to this at the beginning of a string, before any text is printed.
+
 @next
 Read/write
 The next string to be shown after the current one.
 
 @chosen
 Read-only
-The last option chosen in a menu. This is 0 if a menu is currently active or no menu has been displayed yet.
+The last option chosen in a menu. This is 0 if a menu is currently active, if no menu has been displayed yet, or if the player canceled in the last menu.
 
 @default
 Read-only
-Use with @set to reset string settings to the style default.
+This is a pseudo-variable used to reset style variables to the default. There are only four valid uses:
+@set(@cset @default)
+@set(@color @default)
+@set(@speed @default)
+@set(@sfx @default)
 
 
 
@@ -294,15 +405,19 @@ f   6   x7                   =      42 +
 So you'd create a constant with that value:
 const float FUNC_DOSTUFF2 = 543.3828;
 
-Add it into __TANGO_CUSTOM_FUNCTIONS[] followed by the number of arguments it takes. A function can take up to 2 arguments. Set __TANGO_NUM_CUSTOM_FUNCTIONS accordingly.
+Add it into __TANGO_CUSTOM_FUNCTIONS[] and set __TANGO_NUM_CUSTOM_FUNCTIONS accordingly.
 
-const int __TANGO_NUM_CUSTOM_FUNCTIONS = 1;
+const int __TANGO_NUM_CUSTOM_FUNCTIONS = 3;
 
 int __TANGO_CUSTOM_FUNCTIONS[] = {
-    FUNC_DOSTUFF2, 2    // ID, number of arguments
+    FUNC_MYFUNC,
+    FUNC_DOSTUFF1,
+    FUNC_DOSTUFF2
 };
 
-Then fill in the implementation in __Tango_RunCustomFunction(). The function argument is the function ID. args is an array containing the arguments.
+Then fill in the implementation in __Tango_RunCustomFunction(). The function
+argument is the function ID. args is an array containing the arguments.
+A function can take up to two arguments. 
 
 float __Tango_RunCustomFunction(float function, float args)
 {
@@ -315,5 +430,7 @@ float __Tango_RunCustomFunction(float function, float args)
     return 0;
 }
 
-
+Note that it's possible, although very unlikely, for two function names
+to convert to the same number. In that case, you'll just have to rename
+one of them.
 

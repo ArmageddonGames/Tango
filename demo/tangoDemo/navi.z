@@ -1,4 +1,7 @@
 // Circles around and talks to Link if he gets close.
+//
+// This is a demonstration of moving a text slot as it's updating. The message
+// also demonstrates @sfx(), @rand(), and extended font characters.
 
 const int NAVI_MISC_CENTER_X = 0;
 const int NAVI_MISC_CENTER_Y = 1;
@@ -9,8 +12,6 @@ ffc script Navi
 {
     void run()
     {
-        int stringID;
-        
         this->Misc[NAVI_MISC_CENTER_X]=this->X;
         this->Misc[NAVI_MISC_CENTER_Y]=this->Y;
         
@@ -23,13 +24,14 @@ ffc script Navi
                 Waitframe();
             }
             
-            stringID=ShowMessage(NAVI_MESSAGE, TANGO_STRING_NAVI, STYLE_NAVI, this->X-80, this->Y-64);
+            int slot=ShowMessage(NAVI_MESSAGE, TANGO_SLOT_NAVI, STYLE_NAVI,
+              this->X-80, this->Y-64);
             
             // Keep the message in place
-            while(Tango_StringIsVisible(stringID))
+            while(Tango_SlotIsActive(slot))
             {
                 Circle(this);
-                Tango_SetStringPosition(stringID, this->X-80, this->Y-64);
+                Tango_SetSlotPosition(slot, this->X-80, this->Y-64);
                 Waitframe();
             }
             
@@ -49,4 +51,3 @@ ffc script Navi
         this->Y=this->Misc[NAVI_MISC_CENTER_Y]+16*Sin(this->Misc[NAVI_MISC_ANGLE]);
     }
 }
-

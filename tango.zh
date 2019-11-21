@@ -1,4 +1,4 @@
-// tango.zh alpha 1
+// tango.zh alpha 3
 
 // How fast messages scroll
 const int __TANGO_SCROLL_SPEED = 4;
@@ -7,7 +7,7 @@ const int __TANGO_SCROLL_SPEED = 4;
 const int __TANGO_SPEEDUP_FACTOR = 5;
 
 // Whether a sound is played when a space is printed
-const int __TANGO_SFX_ON_SPACE = 0;
+const int __TANGO_SFX_ON_SPACE = 1;
 
 // Strings that advance automatically will wait this long before doing so
 const int __TANGO_AUTO_ADVANCE_TIME = 90;
@@ -26,19 +26,29 @@ const int __TANGO_CODE_DELIMITER = 64;
 // rather than just disappearing
 const int __TANGO_SCROLL_TO_NEXT = 1;
 
+// The maximum length of a string handled by @string.
+// Increasing this will make the function take more space in the buffer.
+// It's not necessary to account for the null terminator.
+const int __TANGO_MAX_STRING_FUNC_LENGTH = 16;
+
 // Custom functions
 const int __TANGO_NUM_CUSTOM_FUNCTIONS = 0;
-int __TANGO_CUSTOM_FUNCTIONS[] = { 0 };
+
+int __TANGO_CUSTOM_FUNCTIONS[] = {
+};
 
 float __Tango_RunCustomFunction(float function, float args)
 {
     return 0;
 }
 
+const int __TANGO_MAX_MENU_ITEMS = 4;
+float __Tango_Data[34]; // 22+3*__TANGO_MAX_MENU_ITEMS
+
 // Available styles
-const int __TANGO_NUM_STYLES = 8;
-int __Tango_Styles[184]; // __TANGO_SIZEOF_STYLE * __TANGO_NUM_STYLES
-                         // __TANGO_SIZEOF_STYLE is currently 23
+const int __TANGO_NUM_STYLES = 4;
+int __Tango_Styles[104]; // __TANGO_SIZEOF_STYLE * __TANGO_NUM_STYLES
+                         // __TANGO_SIZEOF_STYLE is currently 26
 
 // Available strings
 const int __TANGO_NUM_STRINGS = 2;
@@ -53,25 +63,111 @@ int __TANGO_STRING_DEFS[] = {
     // 0
     TANGO_STRING_NORMAL,
     0,        // Starting index in __Tango_StringBuffer
+    512,      // Maximum length after processing
     0, 0,     // X, Y on offscreen bitmap
-    256, 512, // Width, height on offscreen bitmap
+    256, 176, // Width, height on offscreen bitmap
     
     // 1
     TANGO_STRING_NORMAL,
     512,
+    512,
     256, 0,
-    256, 512
+    256, 176
 };
+
+
+// Edit these functions to change which buttons are used.
+
+// Return Link->Press* for advance/end string button
+bool __Tango_PressAdvance()
+{
+    return Link->PressA;
+}
+
+// Return Link->Input* for advance/end string button
+bool __Tango_InputAdvance()
+{
+    return Link->InputA;
+}
+
+// Unset Link->Input* and Link->Press* for advance/end string button
+void __Tango_UnpressAdvance()
+{
+    Link->InputA=false;
+    Link->PressA=false;
+}
+
+// Return Link->Input* for speedup button
+bool __Tango_InputSpeedup()
+{
+    return Link->InputA;
+}
+
+// Unset Link->Input* and Link->Press* for speedup button
+void __Tango_UnpressSpeedup()
+{
+    Link->InputA=false;
+    Link->PressA=false;
+}
+
+// Return Link->Input* for super speed button
+bool __Tango_InputSuperSpeed()
+{
+    return Link->InputB;
+}
+
+// Unset Link->Input* and Link->Press* for super speed button
+void __Tango_UnpressSuperSpeed()
+{
+    Link->InputB=false;
+    Link->PressB=false;
+}
+
+// Return Link->Press* for menu select button
+bool __Tango_PressMenuSelect()
+{
+    return Link->PressA;
+}
+
+// Return Link->Press* for menu cancel button
+bool __Tango_PressMenuCancel()
+{
+    return Link->PressB;
+}
+
+// Return Link->Input* for both menu select and cancel buttons
+bool __Tango_InputMenu()
+{
+    return Link->InputA || Link->InputB;
+}
+
+// Unset Link->Input* and Link->Press* for menu select and cancel buttons
+void __Tango_UnpressMenu()
+{
+    Link->InputA=false;
+    Link->PressA=false;
+    Link->InputB=false;
+    Link->PressB=false;
+}
+
+
+// Import loggingFull.zh instead of loggingMinimal.zh for more useful
+// error messages. This will bloat scripts, so it should only be used
+// for debugging.
+import "tango/loggingMinimal.zh"
+//import "tango/loggingFull.zh"
 
 
 import "tango/common.zh"
 import "tango/drawing.zh"
+import "tango/font.zh"
 import "tango/functions.zh"
 import "tango/loading.zh"
 import "tango/menu.zh"
+import "tango/messages.zh"
 import "tango/metrics.zh"
+import "tango/processing.zh"
 import "tango/style.zh"
-import "tango/update.zh"
 import "tango/user.zh"
 
 import "tango/script.z"
