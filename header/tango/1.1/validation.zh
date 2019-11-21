@@ -1,5 +1,5 @@
 // tango.zh
-// Version 1.1.0
+// Version 1.2.0
 
 
 // Various validation functions. Any that return bools return false
@@ -254,8 +254,8 @@ void __Tango_ValidateSavedVersion()
 {
     if(__Tango_Data[__TDIDX_SAVED_VERSION]==0)
         // Probably playing for the first time. We'll assume so, anyway.
-        __Tango_Data[__TDIDX_SAVED_VERSION]=__TANGO_VERSION;
-    else if(__Tango_Data[__TDIDX_SAVED_VERSION]!=__TANGO_VERSION)
+        __Tango_Data[__TDIDX_SAVED_VERSION]=__TANGO_COMPAT_VERSION;
+    else if(__Tango_Data[__TDIDX_SAVED_VERSION]!=__TANGO_COMPAT_VERSION)
     {
         // Log an error and display a notice, regardless of logging settings
         int error1[]="tango.zh error: The saved data is invalid for the current version of this quest.";

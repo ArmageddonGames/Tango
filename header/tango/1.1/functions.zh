@@ -1,5 +1,5 @@
 // tango.zh
-// Version 1.1.0
+// Version 1.2.0
 
 
 // Constants and functions relating to functions and variables.
@@ -519,9 +519,10 @@ void __Tango_FuncAddMenuItem(int pos, int value)
 }
 
 // Implementation of @domenu
-void __Tango_FuncActivateMenu(int pos, int canCancel, int initialPos)
+void __Tango_FuncActivateMenu(int pos, int flags, int initialPos)
 {
-    Tango_ActivateMenu(canCancel!=0);
+    Tango_SetMenuFlags(flags);
+    Tango_ActivateMenu();
     __Tango_SetCurrSlotData(__TSDIDX_STATE, __TANGO_STATE_MENU_WAIT);
     
     // Insert the character to tell __Tango_Process() the menu's done.

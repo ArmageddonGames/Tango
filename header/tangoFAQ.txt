@@ -1,5 +1,5 @@
 tango.zh
-Version 1.1.0
+Version 1.2.0
 
 
 ================================
@@ -43,8 +43,8 @@ What is a style?
 
 
 A style determines the appearance and behavior of displayed text. For instance,
-the font, the backdrop, and whether the text display can be sped up are all
-controlled by the style.
+the font, the backdrop, and whether the text can be sped up by holding A
+are all controlled by the style.
 
 Style IDs are integers counting up from 0. Every text slot using the same style
 will have the same appearance and behavior.
@@ -67,7 +67,7 @@ even if they'll never all be in use at once.
 How do I add more text slots?
 
 
-Set __TANGO_NUM_SLOTS to the number of slots you want, and change the size of
+Set __TANGO_NUM_SLOTS to the number of slots you want and change the size of
 __Tango_Buffer[] so that it's large enough to hold the text for all of them.
 
 The slot definitions go in __Tango_SlotDefs[]. The first seven numbers define
@@ -203,6 +203,9 @@ Using more menu options than alloted
 
 Incorrect constants for custom functions
 - Use Tango_ConvertFunctionName() to make sure you've got them right
+
+You can also try calling the function Tango_ValidateConfiguration(). This will
+analyze your settings and report any errors it finds in allegro.log.
 
 ================================
 

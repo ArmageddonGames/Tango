@@ -1,5 +1,5 @@
 tango.zh
-Version 1.1.0
+Version 1.2.0
 
 
 
@@ -147,13 +147,23 @@ void Tango_SetMenuCursor(int combo, int cset, int width, int height)
 void Tango_SetMenuSFX(int moveSound, int selectSound, int cancelSound)
  * Set the sounds to be used by the menu.
 
-void Tango_ActivateMenu(bool canCancel)
+void Tango_SetMenuFlags(int flags)
+ * Set flags for the menu. The value is 0 or one or more menu flags
+ * ORed together. See the menu flags section for available flags.
+
+void Tango_ActivateMenu()
  * Activate a menu set up using the above functions.
+
+void Tango_DeactivateMenu()
+ * Deactivate the active menu. This is typically only needed for
+ * persistent menus.
 
 int Tango_GetLastMenuChoice()
  * Returns the value of the last selection made in a menu. Returns 0 if
- * a menu is currently active, no menu has been shown yet, or the user
- * cancelled in the last menu.
+ * a non-persistent menu is currently active, no menu has been shown yet,
+ * or the user cancelled in the last menu.
+ * If the menu is persistent, this function will only return each selection
+ * for a single frame before returning to 0.
 
 int Tango_GetCurrentMenuChoice()
  * Returns the value if the currently selected choice in the menu.
@@ -165,13 +175,21 @@ bool Tango_MenuIsActive()
  * be active until at least the next call to Tango_Update1(), even if
  * TANGO_FLAG_INSTANTANEOUS is used.
 
-void Tango_SaveMenuState(int output[])
+void Tango_SaveMenuState(int state[])
  * Store the current state of the menu into output. This will store the
  * values and positions of the options, the cursor and sound settings, and
  * the currently selected option.
- * The size of output must be at least 19 + 3 * __TANGO_MAX_MENU_ITEMS.
- * This may increase in future versions,so you may want to make the array
- * larger than necessary.
+ * The size of output must be at least 20 + 3 * __TANGO_MAX_MENU_ITEMS.
+ * Later versions of tango.zh are likely to use more data; you may
+ * want to use a larger array for future-proofing.
+
+void Tango_SetMenuAutosaveDest(int state[])
+ * Sets an array in which the menu state will automatically be saved
+ * when a selection is made or the player cancels. The state will not
+ * be saved if the menu is closed for another reason. Note that the
+ * saved state includes the pointer to the autosave location itself.
+ * After setting the autosave array, you can call this again with an
+ * argument of NULL to clear it.
 
 void Tango_RestoreMenuState(int oldState[])
  * Restore the state saved with Tango_SaveMenuState().
@@ -226,8 +244,8 @@ void Tango_SaveSlotState(int slot, int output[])
  * If a bitmap is specified, the text already rendered will be copied to 
  * that bitmap. The render target will be set to RT_SCREEN afterward.
  * The size of output must be at least the slot's length in the buffer + 21.
- * This may increase in future versions,so you may want to make the array
- * larger than necessary.
+ * Later versions of tango.zh are likely to use more data; you may
+ * want to use a larger array for future-proofing.
 
 void Tango_RestoreSlotState(int slot, int oldState[], int bitmap)
 void Tango_RestoreSlotState(int slot, int oldState[])
@@ -502,10 +520,14 @@ They return 1 if the condition is true and 0 if it's false.
 @domenu()
 @domenu(a1)
 @domenu(a1 a2)
- * a1: Condition or number
+ * a1: Number
  * Activates the menu and suspends further processing until a selection
  * is made.
- * If a1 is nonzero, the player can cancel instead of making a selection.
+ * For argument a1, add the following values to enable the corresponding feature
+ * or use 0 to disable both.
+ *   1: The player can cancel instead of making a selection
+ *   2: The menu is persistent (doesn't close after a selection is made)
+ *   - This is only useful when a script is running to see each selection
  * a2 specifies the initially selected choice, counting from 0. If an invalid
  * number is given, no choice will be selected initially; this is sometimes
  * useful to prevent the player from making a selection accidentally.
@@ -614,7 +636,7 @@ TANGO_STYLE_FLAGS
  * section for a list of flags.
 
 
-================ Flags ================
+================ Style flags ================
 
 Constants to be used with TANGO_STYLE flags. These can be combined
 with bitwise OR.
@@ -795,6 +817,16 @@ int sampleBackdrop[]= {
         12, 5, // Width, height (tiles)
     TANGO_DRAW_END
 };
+
+
+================ Menu flags ================
+
+TANGO_MENU_CAN_CANCEL
+ * The user can cancel out of the menu instead of making a selection.
+
+TANGO_MENU_PERSISTENT
+ * The menu is persistent, meaning it will not close when a selection is made.
+ * It will still close if the user cancels.
 
 
 ================ Text slot definition format ================

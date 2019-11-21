@@ -40,10 +40,11 @@ ffc script PickAColor
         Tango_InitializeMenu();
         Tango_SetMenuCursor(706, 0, 2, 2);
         Tango_SetMenuSFX(66, 67, 0);
+        Tango_SetMenuFlags(TANGO_MENU_CAN_CANCEL);
         for(int i=0; i<3; i++)
             Tango_AddMenuChoice(i+1, choiceX[i], choiceY[i]);
         
-        Tango_ActivateMenu(false);
+        Tango_ActivateMenu();
         
         // Show a second string with whatever the cursor is currently on
         while(Tango_MenuIsActive())
@@ -66,6 +67,12 @@ ffc script PickAColor
         
         if(choiceSlot!=TANGO_INVALID)
             Tango_ClearSlot(choiceSlot);
+        
+        if(Tango_GetLastMenuChoice()==0) // Canceled
+        {
+            Tango_ClearSlot(talkSlot);
+            return;
+        }
         
         // Load the value to pass to @string
         Tango_SetSlotVar(talkSlot, TANGO_VAR_A0,

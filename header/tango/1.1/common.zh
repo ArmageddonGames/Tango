@@ -1,9 +1,9 @@
 // tango.zh
-// Version 1.1.0
+// Version 1.2.0
 
 
-// Used for save validation. Zeroes are added to distinguish 1.1 and 1.10, etc.
-const int __TANGO_VERSION = 1.0001;
+// Used for save validation
+const int __TANGO_COMPAT_VERSION = 2;
 
 // __Tango_Data[] indices
 // Skip 0-6 for current slot data (__TCS constants)
@@ -14,7 +14,7 @@ const int __TDIDX_LAST_CHOICE          = 10;
 const int __TDIDX_SCREEN_FREEZE        = 11;
 const int __TDIDX_REFRESH_STYLE        = 12;
 const int __TDIDX_ERROR_NOTIFICATION   = 13;
-const int __TDIDX_MENU_CAN_CANCEL      = 14;
+const int __TDIDX_MENU_FLAGS           = 14;
 const int __TDIDX_MENU_CURSOR_POS      = 15;
 const int __TDIDX_MENU_CURSOR_COMBO    = 16;
 const int __TDIDX_MENU_CURSOR_CSET     = 17;
@@ -33,7 +33,8 @@ const int __TDIDX_MENU_CURSOR_VX       = 29;
 const int __TDIDX_MENU_CURSOR_VY       = 30;
 const int __TDIDX_MENU_CURSOR_TIMER    = 31;
 const int __TDIDX_FIRST_CHOICE_ON_LINE = 32;
-const int __TDIDX_CHOICE_DATA          = 33;
+const int __TDIDX_MENU_SAVE_STATE_DEST = 33;
+const int __TDIDX_CHOICE_DATA          = 34;
 
 const int __TANGO_MENU_DATA_START = 14; // Used by Tango_SaveMenuState()
 

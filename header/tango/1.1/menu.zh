@@ -1,13 +1,17 @@
 // tango.zh
-// Version 1.1.0
+// Version 1.2.0
 
 
-// Menu-related functions.
+// Menu-related functions and constants.
+
+const int TANGO_MENU_CAN_CANCEL = 1;
+const int TANGO_MENU_PERSISTENT = 2;
 
 
 // Resets all menu data.
 void Tango_InitializeMenu()
 {
+    __Tango_Data[__TDIDX_MENU_FLAGS]=0;
     __Tango_Data[__TDIDX_MENU_CURSOR_POS]=-214747.9999;
     __Tango_Data[__TDIDX_MENU_CURSOR_COMBO]=0;
     __Tango_Data[__TDIDX_MENU_CURSOR_CSET]=0;
@@ -21,6 +25,7 @@ void Tango_InitializeMenu()
     __Tango_Data[__TDIDX_MENU_SLOT]=-1;
     __Tango_Data[__TDIDX_MENU_TOP]=-214747.9999;
     __Tango_Data[__TDIDX_MENU_BOTTOM]=214747.9999;
+    __Tango_Data[__TDIDX_MENU_SAVE_STATE_DEST]=NULL;
 }
 
 // This version is used when reading a menu from a string. It loads the
@@ -53,6 +58,7 @@ void __Tango_InitializeMenu(int styleStart)
     __Tango_Data[__TDIDX_MENU_BOTTOM]=__Tango_Data[__TDIDX_MENU_TOP]+
       __Tango_Styles[styleStart+TANGO_STYLE_TEXT_HEIGHT]-
       font[__TANGO_FONT_CHAR_HEIGHT];
+    __Tango_Data[__TDIDX_MENU_SAVE_STATE_DEST]=NULL;
 }
 
 void Tango_AddMenuChoice(int value, int x, int y)
@@ -94,7 +100,12 @@ void Tango_SetMenuSFX(int moveSound, int selectSound, int cancelSound)
     __Tango_Data[__TDIDX_MENU_CANCEL_SFX]=cancelSound;
 }
 
-void Tango_ActivateMenu(bool canCancel)
+void Tango_SetMenuFlags(int flags)
+{
+    __Tango_Data[__TDIDX_MENU_FLAGS]=flags;
+}
+
+void Tango_ActivateMenu()
 {
     if(__Tango_Data[__TDIDX_CHOICE_COUNT]<=0)
     {
@@ -102,15 +113,16 @@ void Tango_ActivateMenu(bool canCancel)
         return;
     }
     
-    if(canCancel)
-        __Tango_Data[__TDIDX_MENU_CAN_CANCEL]=1;
-    else
-        __Tango_Data[__TDIDX_MENU_CAN_CANCEL]=0;
     __Tango_Data[__TDIDX_MENU_CURSOR_POS]=0;
-    
     __Tango_UnpressMenu(); // Prevent the player from making a selection instantly
     __Tango_ScrollToMenuCursor(0);
     __Tango_SetCursorMovement(0, 0);
+}
+
+void Tango_DeactivateMenu()
+{
+    __Tango_Data[__TDIDX_MENU_CURSOR_POS]=-214747.9999;
+    __Tango_MenuNotify();
 }
 
 bool Tango_MenuIsActive()
@@ -160,6 +172,9 @@ void __Tango_SetUpMenu(int styleStart)
 
 void __Tango_UpdateMenu()
 {
+    if(__Tango_Data[__TDIDX_LAST_CHOICE]!=0)
+        __Tango_Data[__TDIDX_LAST_CHOICE]=0;
+    
     int oldPos=__Tango_Data[__TDIDX_MENU_CURSOR_POS];
     int pos;
     bool oldPosWasValid=__Tango_CursorPosIsValid();
@@ -177,18 +192,10 @@ void __Tango_UpdateMenu()
     
     // Selected
     if(__Tango_PressMenuSelect() && __Tango_CursorPosIsValid())
-    {
-        int dataStart=__TDIDX_CHOICE_DATA+pos*__TANGO_SIZEOF_CHOICE;
-        __Tango_Data[__TDIDX_LAST_CHOICE]=
-          __Tango_Data[dataStart+__TANGO_CHOICE_VALUE];
-        __Tango_Data[__TDIDX_MENU_CURSOR_POS]=-214747.9999;
-        Game->PlaySound(__Tango_Data[__TDIDX_MENU_SELECT_SFX]);
-        __Tango_MenuNotify();
-        __Tango_Data[__TDIDX_GLOBAL_FLAGS]|=__TANGO_GFLAG_UNPRESS_MENU;
-    }
+        __Tango_MenuSelect(pos);
     
     // Canceled
-    else if(__Tango_Data[__TDIDX_MENU_CAN_CANCEL]!=0 &&
+    else if((__Tango_Data[__TDIDX_MENU_FLAGS]&TANGO_MENU_CAN_CANCEL)!=0 &&
       __Tango_PressMenuCancel())
         __Tango_MenuCancel();
     
@@ -374,8 +381,25 @@ void __Tango_ReadChoice(int pos, int defStart, int dataStart, int styleStart)
     Tango_AddMenuChoice(value, x, y);
 }
 
+void __Tango_MenuSelect(int pos)
+{
+    if(__Tango_Data[__TDIDX_MENU_SAVE_STATE_DEST]>0)
+        Tango_SaveMenuState(__Tango_Data[__TDIDX_MENU_SAVE_STATE_DEST]);
+    
+    int dataStart=__TDIDX_CHOICE_DATA+pos*__TANGO_SIZEOF_CHOICE;
+    __Tango_Data[__TDIDX_LAST_CHOICE]=
+      __Tango_Data[dataStart+__TANGO_CHOICE_VALUE];
+    Game->PlaySound(__Tango_Data[__TDIDX_MENU_SELECT_SFX]);
+    __Tango_Data[__TDIDX_GLOBAL_FLAGS]|=__TANGO_GFLAG_UNPRESS_MENU;
+    if((__Tango_Data[__TDIDX_MENU_FLAGS]&TANGO_MENU_PERSISTENT)==0)
+        Tango_DeactivateMenu();
+}
+
 void __Tango_MenuCancel()
 {
+    if(__Tango_Data[__TDIDX_MENU_SAVE_STATE_DEST]>0)
+        Tango_SaveMenuState(__Tango_Data[__TDIDX_MENU_SAVE_STATE_DEST]);
+    
     __Tango_Data[__TDIDX_LAST_CHOICE]=0;
     __Tango_Data[__TDIDX_MENU_CURSOR_POS]=-214747.9999;
     Game->PlaySound(__Tango_Data[__TDIDX_MENU_CANCEL_SFX]);
@@ -523,6 +547,15 @@ void Tango_SaveMenuState(int output)
     
     for(int i=0; i<dataSize; i++)
         output[i]=__Tango_Data[i+__TANGO_MENU_DATA_START];
+    
+    // If the cursor is moving to a new position, don't save that;
+    // just put it at its destination.
+    int curChoice=__Tango_Data[__TDIDX_MENU_CURSOR_POS];
+    output[__TDIDX_MENU_CURSOR_X-__TANGO_MENU_DATA_START]=
+      __Tango_GetMenuChoiceX(curChoice);
+    output[__TDIDX_MENU_CURSOR_Y-__TANGO_MENU_DATA_START]=
+      __Tango_GetMenuChoiceY(curChoice);
+    output[__TDIDX_MENU_CURSOR_TIMER-__TANGO_MENU_DATA_START]=0;
 }
 
 void Tango_RestoreMenuState(int oldState)
@@ -537,6 +570,11 @@ void Tango_RestoreMenuState(int oldState)
     
     for(int i=0; i<dataSize; i++)
         __Tango_Data[i+__TANGO_MENU_DATA_START]=oldState[i];
+}
+
+void Tango_SetMenuAutosaveDest(int arr)
+{
+    __Tango_Data[__TDIDX_MENU_SAVE_STATE_DEST]=arr;
 }
 
 void __Tango_SetCursorMovement(int choice, int time)

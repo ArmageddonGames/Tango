@@ -1,5 +1,5 @@
 // tango.zh
-// Version 1.1.0
+// Version 1.2.0
 
 
 // Constants and functions related to processing strings.
@@ -570,6 +570,8 @@ void __Tango_PrintNextChar(int dataStart, int character, int font)
 
 // Determines whether the next character or word will fit on the
 // current line. Newline characters are not handled here.
+// This can also evaluate a function if it comes in a menu choice,
+// because the result may depend on text inserted by the function.
 bool __Tango_NeedsNewLine(int slot, int pos)
 {
     int character=__Tango_Buffer[pos];
@@ -586,15 +588,15 @@ bool __Tango_NeedsNewLine(int slot, int pos)
     // Choices fit on the current line if the following word fits.
     if(character==__TANGO_CHAR_CHOICE)
     {
-        character=__Tango_Buffer[pos+1];
+        character=__Tango_Buffer[pos+2];
         left+=__Tango_Styles[styleStart+TANGO_STYLE_MENU_CHOICE_INDENT];
         
         // If this is a function, it may print text, so evaluate it
         // and reread the character.
         if(character==__TANGO_FUNC_MARKER)
         {
-            __Tango_RunFunction(pos, true);
-            character=__Tango_Buffer[pos];
+            __Tango_RunFunction(pos+2, true);
+            character=__Tango_Buffer[pos+2];
         }
         
         // If the next character is the start of a word, see if it fits.

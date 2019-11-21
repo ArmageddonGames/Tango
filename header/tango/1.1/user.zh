@@ -1,5 +1,5 @@
 // tango.zh
-// Version 1.1.0
+// Version 1.2.0
 
 
 // Functions for the user's use that don't really fit elsewhere.
@@ -351,15 +351,15 @@ float __Tango_ConvertName(int name, int type, int prefix)
     if(value==-1)
     {
         int error[]="%s name '%s' contains invalid characters\n";
-        error[14]='"';
-        error[17]='"';
+        error[8]='"';
+        error[11]='"';
         printf(error, type, name);
     }
     else if(value==-2)
     {
         int error[]="%s name '%s' overflowed\n";
-        error[14]='"';
-        error[17]='"';
+        error[8]='"';
+        error[11]='"';
         printf(error, type, name);
     }
     else

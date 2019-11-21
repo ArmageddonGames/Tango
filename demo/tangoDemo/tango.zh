@@ -1,5 +1,5 @@
 // tango.zh
-// Version 1.1.0
+// Version 1.2.0
 
 
 // Standard settings -----------------------------------------------------------
@@ -105,6 +105,7 @@ void Tango_SetCustomVar(int var, float value)
 
 // Custom functions
 const int FUNC_PORTRAIT = 1529.8275;
+const float FUNC_ENDMIDI = 83.8084;
 
 float __Tango_RunCustomFunction(float function, float args)
 {
@@ -112,6 +113,13 @@ float __Tango_RunCustomFunction(float function, float args)
     {
         // zeldaFrame[8] is Zelda's portrait tile
         zeldaFrame[8]=args[0];
+        return 0;
+    }
+    else if(function==FUNC_ENDMIDI)
+    {
+        // Used by the string control code demo to restore the DMap's music,
+        // since string control codes can't do that
+        Game->PlayMIDI(Game->DMapMIDI[0]);
         return 0;
     }
     
@@ -122,7 +130,7 @@ float __Tango_RunCustomFunction(float function, float args)
 
 // Menu data
 const int __TANGO_MAX_MENU_ITEMS = 4;
-float __Tango_Data[45]; // 33+3*__TANGO_MAX_MENU_ITEMS
+float __Tango_Data[46]; // 34+3*__TANGO_MAX_MENU_ITEMS
 
 // Style data
 const int __TANGO_NUM_STYLES = 7;
@@ -267,31 +275,32 @@ void __Tango_UnpressMenu()
 
 // Import stringControlCode.zh instead of stringControlCodeDisabled.zh
 // to enable string control codes.
-//import "tango/1.1/stringControlCodeDisabled.zh"
-import "tango/1.1/stringControlCode.zh"
+//import "tango/1.2/stringControlCodeDisabled.zh"
+import "tango/1.2/stringControlCode.zh"
 
 
 // Import loggingFull.zh instead of loggingMinimal.zh for more useful
 // error messages. This will bloat scripts, so it should only be used
 // for debugging.
-//import "tango/1.1/loggingMinimal.zh"
-import "tango/1.1/loggingFull.zh"
+//import "tango/1.2/loggingMinimal.zh"
+import "tango/1.2/loggingFull.zh"
 
 // End advanced settings -------------------------------------------------------
 
 
-import "tango/1.1/access.zh"
-import "tango/1.1/common.zh"
-import "tango/1.1/drawing.zh"
-import "tango/1.1/font.zh"
-import "tango/1.1/functions.zh"
-import "tango/1.1/loading.zh"
-import "tango/1.1/menu.zh"
-import "tango/1.1/messages.zh"
-import "tango/1.1/metrics.zh"
-import "tango/1.1/processing.zh"
-import "tango/1.1/style.zh"
-import "tango/1.1/user.zh"
-import "tango/1.1/validation.zh"
+import "tango/1.2/access.zh"
+import "tango/1.2/common.zh"
+import "tango/1.2/deprecated.zh"
+import "tango/1.2/drawing.zh"
+import "tango/1.2/font.zh"
+import "tango/1.2/functions.zh"
+import "tango/1.2/loading.zh"
+import "tango/1.2/menu.zh"
+import "tango/1.2/messages.zh"
+import "tango/1.2/metrics.zh"
+import "tango/1.2/processing.zh"
+import "tango/1.2/style.zh"
+import "tango/1.2/user.zh"
+import "tango/1.2/validation.zh"
 
-import "tango/1.1/script.z"
+import "tango/1.2/script.z"
