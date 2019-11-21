@@ -1,5 +1,5 @@
 // tango.zh
-// Beta 2
+// Version 1.0.0
 
 
 // __Tango_Data[] indices
@@ -7,8 +7,8 @@
 const int __TDIDX_GLOBAL_FLAGS         = 7;
 const int __TDIDX_PREV_SCREEN          = 8;
 const int __TDIDX_LAST_CHOICE          = 9;
-const int __TDIDX_CONDITION_MET        = 10;
-const int __TDIDX_SCREEN_FREEZE        = 11;
+const int __TDIDX_SCREEN_FREEZE        = 10;
+const int __TDIDX_REFRESH_STYLE        = 11;
 const int __TDIDX_MENU_CAN_CANCEL      = 12;
 const int __TDIDX_MENU_CURSOR_POS      = 13;
 const int __TDIDX_MENU_CURSOR_COMBO    = 14;
@@ -21,8 +21,7 @@ const int __TDIDX_MENU_CANCEL_SFX      = 20;
 const int __TDIDX_CHOICE_COUNT         = 21;
 const int __TDIDX_MENU_SLOT            = 22;
 const int __TDIDX_FIRST_CHOICE_ON_LINE = 23;
-const int __TDIDX_REFRESH_STYLE        = 24;
-const int __TDIDX_CHOICE_DATA          = 25;
+const int __TDIDX_CHOICE_DATA          = 24;
 
 const int __TANGO_MENU_DATA_START = 12; // Used by Tango_SaveMenuState()
 
@@ -62,12 +61,14 @@ const int __TSDIDX_COLOR             = 9; // Built-in fonts only
 const int __TSDIDX_SPEED             = 10;
 const int __TSDIDX_SFX               = 11;
 const int __TSDIDX_OFFSET            = 12;
-const int __TSDIDX_SCROLLING         = 13;
-const int __TSDIDX_NEXT_STRING       = 14;
-const int __TSDIDX_IGNORE_SPEED_KEYS = 15;
-const int TANGO_VAR_A0               = 16;
-const int TANGO_VAR_A1               = 17;
-const int __TANGO_SIZEOF_DATA        = 18;
+const int __TSDIDX_MAX_OFFSET        = 13;
+const int __TSDIDX_SCROLLING         = 14;
+const int __TSDIDX_NEXT_STRING       = 15;
+const int __TSDIDX_IGNORE_SPEED_KEYS = 16;
+const int __TSDIDX_CONDITION_MET     = 17;
+const int TANGO_VAR_A0               = 18;
+const int TANGO_VAR_A1               = 19;
+const int __TANGO_SIZEOF_DATA        = 20;
 
 // __Tango_SlotDefs[] data
 const int __TSDEF_TYPE   = 0;
@@ -136,96 +137,6 @@ bool __Tango_IsSpecialDataMarker(int character)
         return true;
     
     return false;
-}
-
-// Various functions to make accessing the arrays a little more convenient.
-
-float __Tango_GetCurrSlotData(int what)
-{
-    return __Tango_SlotData[__Tango_Data[__TCS_DATA_START]+what];
-}
-
-int __Tango_GetCurrSlotDefData(int what)
-{
-    return __Tango_SlotDefs[__Tango_Data[__TCS_DEF_START]+what];
-}
-
-int __Tango_GetSlotDefData(int slot, int what)
-{
-    return __Tango_SlotDefs[slot*__TANGO_SIZEOF_SLOTDEF+what];
-}
-
-int __Tango_GetCurrFontData(int what)
-{
-    int font=__Tango_Data[__TCS_FONT];
-    return font[what];
-}
-
-void __Tango_SetCurrSlotData(int what, float value)
-{
-    __Tango_SlotData[__Tango_Data[__TCS_DATA_START]+what]=value;
-}
-
-int __Tango_GetCurrStyleData(int what)
-{
-    return __Tango_Styles[__Tango_Data[__TCS_STYLE_START]+what];
-}
-
-int __Tango_GetCurrentCSet()
-{
-    int cset=__Tango_GetCurrSlotData(__TSDIDX_CSET);
-    if(cset==TANGO_DEFAULT)
-        cset=__Tango_GetCurrStyleData(TANGO_STYLE_TEXT_CSET);
-    return cset;
-}
-
-int __Tango_GetCurrentColor()
-{
-    int color=__Tango_GetCurrSlotData(__TSDIDX_COLOR);
-    if(color==TANGO_DEFAULT)
-        color=__Tango_GetCurrStyleData(TANGO_STYLE_TEXT_COLOR);
-
-    return color;
-}
-
-int __Tango_GetCurrentSpeed()
-{
-    int speed=__Tango_GetCurrSlotData(__TSDIDX_SPEED);
-    if(speed==TANGO_DEFAULT)
-        return __Tango_GetCurrStyleData(TANGO_STYLE_TEXT_SPEED);
-    else if(speed<0)
-        return 0;
-    return speed;
-}
-
-int __Tango_GetCurrentSFX()
-{
-    int sfx=__Tango_GetCurrSlotData(__TSDIDX_SFX);
-    if(sfx==TANGO_DEFAULT)
-        sfx=__Tango_GetCurrStyleData(TANGO_STYLE_TEXT_SFX);
-    return sfx;
-}
-
-int __Tango_GetLineHeight()
-{
-    int font=__Tango_Data[__TCS_FONT];
-    return font[__TANGO_FONT_CHAR_HEIGHT]+font[__TANGO_FONT_LINE_SPACING];
-}
-
-int __Tango_GetSlotState(int slot)
-{
-    int dataStart=slot*__TANGO_SIZEOF_DATA;
-    return __Tango_SlotData[dataStart+__TSDIDX_STATE];
-}
-
-int __Tango_GetSlotFlags(int slot)
-{
-    int dataStart=slot*__TANGO_SIZEOF_DATA;
-    if(__Tango_SlotData[dataStart+__TSDIDX_STYLE]==TANGO_INVALID)
-        return 0;
-    int styleStart=__Tango_SlotData[dataStart+__TSDIDX_STYLE]*
-                   __TANGO_SIZEOF_STYLE;
-    return __Tango_Styles[styleStart+TANGO_STYLE_FLAGS];
 }
 
 // Increment the screen freeze counter. Freeze the screen if it was 0.
@@ -321,4 +232,3 @@ int __Tango_FloatToASCII(int buffer, float value, bool allDigits)
     buffer[pos]=NULL;
     return pos;
 }
-

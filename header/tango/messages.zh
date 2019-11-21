@@ -1,5 +1,5 @@
 // tango.zh
-// Beta 2
+// Version 1.0.0
 
 
 // Different types of messages that might be logged.
@@ -47,9 +47,11 @@ const int __TANGO_ERROR_LOAD_INVALID_STRING = 11;
 // Attempted to load an invalid message (loading error)
 const int __TANGO_ERROR_LOAD_INVALID_MESSAGE = 12;
 
-// String control code encountered, but they're disabled (processing error)
-const int __TANGO_ERROR_SCC_DISABLED = 13;
-
 // Invalid variable used (processing error)
-const int __TANGO_ERROR_INVALID_VAR = 14;
+const int __TANGO_ERROR_UNDEFINED_VAR = 13;
 
+// Incomplete string control code (loading error)
+const int __TANGO_ERROR_INCOMPLETE_SCC = 14;
+
+// String control codes disabled (loading error)
+const int __TANGO_ERROR_SCC_DISABLED = 15;

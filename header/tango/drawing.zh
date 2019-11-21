@@ -1,5 +1,5 @@
 // tango.zh
-// Beta 2
+// Version 1.0.0
 
 
 // Functions used to draw to the screen or an offscreen bitmap.
@@ -195,11 +195,7 @@ void __Tango_DrawToScreen()
     int height=__Tango_Styles[styleStart+TANGO_STYLE_TEXT_HEIGHT];
     
     if(__Tango_SlotData[dataStart+__TSDIDX_STATE]==__TANGO_STATE_ADVANCING)
-    {
-        int offset=__Tango_SlotData[dataStart+__TSDIDX_COUNTER];
-        bitmapY+=offset;
-        height-=offset;
-    }
+        height-=__Tango_SlotData[dataStart+__TSDIDX_COUNTER];
     
     // Copy the text to the screen.
     Screen->DrawBitmap(__TANGO_DRAWING_LAYER, __TANGO_BITMAP,

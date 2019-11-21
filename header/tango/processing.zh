@@ -1,5 +1,5 @@
 // tango.zh
-// Beta 2
+// Version 1.0.0
 
 
 // Constants and functions related to processing strings.
@@ -280,6 +280,7 @@ void __Tango_UpdateAdvancing(int speed)
     __Tango_SlotData[dataStart+__TSDIDX_CHAR_Y]=
         __Tango_SlotDefs[defStart+__TSDEF_Y];
     __Tango_SlotData[dataStart+__TSDIDX_OFFSET]=0;
+    __Tango_SlotData[dataStart+__TSDIDX_MAX_OFFSET]=0;
     __Tango_SlotData[dataStart+__TSDIDX_SCROLLING]=0;
     __Tango_ClearSlotBitmap(__Tango_Data[__TCS_ID]);
     
@@ -287,7 +288,7 @@ void __Tango_UpdateAdvancing(int speed)
 }
 
 // Updates a finished text slot. Counts down the auto advance timer or
-// check if the advance button was pressed, then clears the slot or
+// checks if the advance button was pressed, then clears the slot or
 // scroll up to make room for the next message.
 void __Tango_UpdateFinished(int flags, int speed)
 {
@@ -296,6 +297,7 @@ void __Tango_UpdateFinished(int flags, int speed)
     
     if((flags&TANGO_FLAG_AUTO_ADVANCE)!=0)
     {
+        // Update the auto advance timer
         if(__Tango_SlotData[dataStart+__TSDIDX_COUNTER]>0)
         {
             __Tango_CountDown(speed);
@@ -365,7 +367,7 @@ void __Tango_Process(int speed)
         // Space or printable character
         if(character>=' ')
         {
-            lastWasSpace=true; // TODO: Is that right? Shouldn't it be lastWasSpace=(character==' '); ?
+            lastWasSpace=(character==' ');
             __Tango_PrintNextChar(dataStart, character, font);
             if((character>' ' || __TANGO_SFX_ON_SPACE!=0) &&
                !isMenu && speed!=__TANGO_SPEED_SUPER && !lineByLine)
@@ -389,7 +391,7 @@ void __Tango_Process(int speed)
             position+=6; // It must be at least six characters long;
                          // might as well skip ahead a bit
             
-            // If @style was set, all the style data needs reloaded
+            // If @style was set, reload all the style data
             if(__Tango_Data[__TDIDX_REFRESH_STYLE]!=0)
             {
                 styleStart=__Tango_Data[__TCS_STYLE_START];
@@ -492,7 +494,10 @@ void __Tango_Process(int speed)
             {
                 if(isMenu || speed==__TANGO_SPEED_SUPER)
                 {
-                    __Tango_SlotData[dataStart+__TSDIDX_OFFSET]+=scrolling;
+                    if(__Tango_SlotData[dataStart+__TSDIDX_OFFSET]==
+                      __Tango_SlotData[dataStart+__TSDIDX_MAX_OFFSET])
+                        __Tango_SlotData[dataStart+__TSDIDX_OFFSET]+=scrolling;
+                    __Tango_SlotData[dataStart+__TSDIDX_MAX_OFFSET]+=scrolling;
                     if(isMenu)
                         __Tango_ShiftMenuUp(scrolling);
                 }
@@ -612,7 +617,7 @@ bool __Tango_NeedsNewLine(int slot, int pos)
         }
     }
     
-    // if this is the start of a word, see if the word fits.
+    // If this is the start of a word, see if the word fits.
     if(wordStart)
         return !__Tango_WordWillFit(pos, font, left, right);
     
@@ -632,7 +637,7 @@ int __Tango_StartNewLine(bool isMenu)
     __Tango_SlotData[dataStart+__TSDIDX_CHAR_Y]+=__Tango_GetLineHeight();
     
     return __Tango_GetTargetOffset()-
-             __Tango_SlotData[dataStart+__TSDIDX_OFFSET];
+             __Tango_SlotData[dataStart+__TSDIDX_MAX_OFFSET];
 }
 
 // When using centered text, the line currently being processed is drawn
@@ -677,7 +682,8 @@ void __Tango_CountDown(int speed)
         __Tango_SlotData[dataStart+__TSDIDX_COUNTER]-amount);
 }
 
-// Scroll down to display the next line or the next string.
+// Scroll down to display the next line or make way for the next string.
+// Returns true if scrolling is finished.
 bool __Tango_Scroll(int speed)
 {
     if(__TANGO_SCROLL_SPEEDUP==0)
@@ -687,36 +693,62 @@ bool __Tango_Scroll(int speed)
     
     if(speed==__TANGO_SPEED_SUPER)
     {
-        __Tango_SlotData[dataStart+__TSDIDX_OFFSET]+=
-            __Tango_SlotData[dataStart+__TSDIDX_SCROLLING];
+        // Super speed? Jump to the end.
+        float amount=__Tango_SlotData[dataStart+__TSDIDX_SCROLLING];
+        if(__Tango_SlotData[dataStart+__TSDIDX_OFFSET]==
+          __Tango_SlotData[dataStart+__TSDIDX_MAX_OFFSET])
+            __Tango_SlotData[dataStart+__TSDIDX_OFFSET]+=amount;
+        __Tango_SlotData[dataStart+__TSDIDX_MAX_OFFSET]+=amount;
         __Tango_SlotData[dataStart+__TSDIDX_SCROLLING]=0;
         return true;
     }
     else
     {
-        int amount=__TANGO_SCROLL_SPEED;
+        float amount=__TANGO_SCROLL_SPEED;
         if(speed==__TANGO_SPEED_FAST)
             amount*=__TANGO_SPEEDUP_FACTOR;
         
         if(__Tango_SlotData[dataStart+__TSDIDX_SCROLLING]<=amount)
         {
-            // Won't scroll all the way down this time.
-            __Tango_SlotData[dataStart+__TSDIDX_OFFSET]+=
-                __Tango_SlotData[dataStart+__TSDIDX_SCROLLING];
+            // At the end; scroll the rest of the way, which may not be
+            // the maximum possible scroll step
+            amount=__Tango_SlotData[dataStart+__TSDIDX_SCROLLING];
+            
+            if(__Tango_SlotData[dataStart+__TSDIDX_OFFSET]>=
+              __Tango_SlotData[dataStart+__TSDIDX_MAX_OFFSET])
+                __Tango_SlotData[dataStart+__TSDIDX_OFFSET]+=amount;
+            __Tango_SlotData[dataStart+__TSDIDX_MAX_OFFSET]+=amount;
             __Tango_SlotData[dataStart+__TSDIDX_SCROLLING]=0;
             return true;
         }
 
         else
         {
-            // Scroll all the way.
-            __Tango_SlotData[dataStart+__TSDIDX_OFFSET]+=amount;
+            // Not at the end; advance the full step and keep going
+            
+            if(__Tango_SlotData[dataStart+__TSDIDX_STATE]==__TANGO_STATE_ADVANCING)
+            {
+                // The size of the drawing rectangle shrinks as the text
+                // scrolls off the top; use the state counter to track that
+                if(__Tango_SlotData[dataStart+__TSDIDX_OFFSET]>=
+                  __Tango_SlotData[dataStart+__TSDIDX_MAX_OFFSET])
+                    __Tango_SlotData[dataStart+__TSDIDX_COUNTER]+=amount;
+                
+                // Scrolling to the next string; don't update max offset
+                __Tango_SlotData[dataStart+__TSDIDX_OFFSET]+=amount;
+            }
+            else
+            {
+                // Just scrolling the current text; only actually scroll
+                // if it's already as far down as possible
+                if(__Tango_SlotData[dataStart+__TSDIDX_OFFSET]==
+                  __Tango_SlotData[dataStart+__TSDIDX_MAX_OFFSET])
+                    __Tango_SlotData[dataStart+__TSDIDX_OFFSET]+=amount;
+                __Tango_SlotData[dataStart+__TSDIDX_MAX_OFFSET]+=amount;
+            }
+            
             __Tango_SlotData[dataStart+__TSDIDX_SCROLLING]-=amount;
             
-            // If scrolling to the next string, use the state counter
-            // to track the reduction in drawing size.
-            if(__Tango_SlotData[dataStart+__TSDIDX_STATE]==__TANGO_STATE_ADVANCING)
-                __Tango_SlotData[dataStart+__TSDIDX_COUNTER]+=amount;
             return false;
         }
     }
@@ -725,10 +757,13 @@ bool __Tango_Scroll(int speed)
 // Sets the slot up to advance to the next message.
 void __Tango_BeginAdvancing()
 {
-    __Tango_SetCurrSlotData(__TSDIDX_STATE, __TANGO_STATE_ADVANCING);
-    __Tango_SetCurrSlotData(__TSDIDX_SCROLLING,
-                           __Tango_GetCurrStyleData(TANGO_STYLE_TEXT_HEIGHT));
-    __Tango_SetCurrSlotData(__TSDIDX_COUNTER, 0);
+    int dataStart=__Tango_Data[__TCS_DATA_START];
+    __Tango_SlotData[dataStart+__TSDIDX_STATE]=__TANGO_STATE_ADVANCING;
+    __Tango_SlotData[dataStart+__TSDIDX_SCROLLING]=
+      __Tango_GetCurrStyleData(TANGO_STYLE_TEXT_HEIGHT)+
+      __Tango_SlotData[dataStart+__TSDIDX_MAX_OFFSET]-
+      __Tango_SlotData[dataStart+__TSDIDX_OFFSET];
+    __Tango_SlotData[dataStart+__TSDIDX_COUNTER]=0;
 }
 
 void Tango_SuspendSlot(int slot)

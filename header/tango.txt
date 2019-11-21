@@ -1,5 +1,5 @@
 tango.zh
-Beta 2
+Version 1.0.0
 
 
 
@@ -11,13 +11,6 @@ Beta 2
 Note: There are many undocumented functions, constants, variables, and
 arrays whose names begin with __. These are meant for internal use only;
 they may be changed or removed without warning in future versions.
-
-
-================ Variables ================
-
-float Tango_D[]
- * And array of eight numbers used to communicate with Tango code. Tango_D[0]
- * and @d0 refer to the same number.
 
 
 ================ Global script functions ================
@@ -49,10 +42,11 @@ void Tango_ClearSlot(int slot)
 
 bool Tango_ReserveSlot(int slot)
  * Mark a slot as reserved, preventing Tango_GetFreeSlot() from returning it.
- * Use this if you get a slot and don't plan to use it immediately.
+ * Use this if you get a free slot and don't plan to use it immediately.
  * Returns true if the reservation succeeded (i.e. the slot wasn't already
  * in use).
- * Changing screens or using Tango_ClearSlot() will clear the reserved state.
+ * The reserved state will be cleared if Tango_ClearSlot() is called or Link
+ * moves to a new screen.
 
 void Tango_LoadString(int slot, int string[])
  * Loads a ZScript string (int[]) into the given slot.
@@ -74,12 +68,13 @@ void Tango_AppendMessage(int slot, int messageID, int startChar)
  * int str[]="abcd%efg";
  * Tango_LoadString(0, str, '%');
  * will load "efg" into slot 0.
- * The character specified must actually be in the string;
- * character codes (@##) will not be recognized.
+ * If the character specified is not in the string, the entire string
+ * will be loaded. The string must contain the actual character, not
+ * a character code (@##).
 
 void Tango_SetSlotStyle(int slot, int style)
 int Tango_GetSlotStyle(int slot)
- * Set or read the style to be used in the given slot.
+ * Set or get the style used by the given slot.
 
 void Tango_SetSlotPosition(int slot, int x, int y)
  * Set the position where the text slot will be shown on the screen.
@@ -92,6 +87,9 @@ bool Tango_SlotIsActive(int slot)
  * Returns true if the slot is currently being displayed on the screen.
  * A suspended slot is still considered active.
 
+bool Tango_AnySlotIsActive()
+ * Returns true if any slot is currently being displayed.
+
 
 ================ Style setup functions ================
 
@@ -100,9 +98,9 @@ void Tango_ClearStyle(int style)
 
 void Tango_SetStyleAttribute(int style, int attribute, int value)
 int Tango_GetStyleAttribute(int style, int attribute)
- * Set or read an attribute of the given style. See the style attributes
- * section for the available attributes and expected values. Note that
- * modifying a style in use by an active text slot is not guaranteed
+ * Set or get an attribute of the given style. See the style attributes
+ * section for the available attributes and expected values.
+ * Modifying a style in use by an active text slot is not guaranteed
  * to work correctly.
 
 int Tango_GetSlotStyleAttribute(int slot, int attribute)
@@ -171,11 +169,11 @@ void Tango_SetMenuCursorPosition(int pos)
 ================ Other functions ================
 
 void Tango_Sync(int value)
- * Used to synchronize a script and a text slot. See @sync().
+ * Used to synchronize a script and a text slot. See @sync() for details.
 
 void Tango_SetSlotVar(int slot, int what, float value)
 float Tango_GetSlotVar(int slot, int what)
- * Use these to set and read a text slot's @a0 and @a1. Use either
+ * Use these to set and get a text slot's @a0 and @a1. Use either
  * TANGO_VAR_A0 or TANGO_VAR_A1 as the what argument.
 
 void Tango_SuspendSlot(int slot)
@@ -184,30 +182,60 @@ void Tango_SuspendSlot(int slot)
 void Tango_ResumeSlot(int slot)
  * Resumes processing of a suspended text slot.
 
+float Tango_GetSlotScrollPos(int slot)
+float Tango_GetSlotMaxScrollPos(int slot)
+ * If the text is too long to be displayed all at once, it will scroll down.
+ * These functions get the current and maximum scroll positions. The minimum
+ * position is always 0, and the maximum is 0 or greater. The scroll amount
+ * is given in pixels.
+
+void Tango_ScrollSlot(int slot, float amount)
+ * Scrolls the text slot up or down. As above, the amount is in pixels.
+ * Poitive numbers scroll down, and negative numbers scroll up. The slot
+ * will not scroll beyond the beginning or end of the text.
+
+int Tango_GetCurrentSlot()
+ * Returns the ID of the slot currently being processed. This should only
+ * be used in __Tango_RunCustomFunction(), Tango_GetCustomVar(), and 
+ * Tango_SetCustomVar(). At any other time, the value is meaningless.
+
 void Tango_SaveSlotState(int slot, int output[], int bitmap)
 void Tango_SaveSlotState(int slot, int output[])
  * Store the state of a text slot into output. The current text, style,
  * position, state, and variables will be saved. The style's data
  * will not be saved.
- * If a bitmap is provided, the text already rendered will be copied to
- * that bitmap.
- * The size of output must be at least the slot's length in the buffer + 18.
+ * If a bitmap is specified, the text already rendered will be copied to 
+ * that bitmap. The render target will be set to RT_SCREEN afterward.
+ * The size of output must be at least the slot's length in the buffer + 20.
 
-void Tango_SaveSlotState(int slot, int output[], int bitmap)
-void Tango_SaveSlotState(int slot, int output[])
+void Tango_RestoreSlotState(int slot, int oldState[], int bitmap)
+void Tango_RestoreSlotState(int slot, int oldState[])
  * Restore the state of a slot saved with Tango_SaveSlotState(). The slot
  * number should be the same, as it will be assumed that the position
  * on the bitmap is the same.
+ * If a bitmap is specified, the render target will be set to RT_SCREEN.
 
 float Tango_ConvertFunctionName(int name[])
- * Returns the converted value of the given function name and prints
- * a constant definition to allegro.log. Do not include '@' in the name.
+float Tango_ConvertVariableName(int name[])
+ * Returns the converted value of the given name and prints a constant
+ * definition to allegro.log. Do not include '@' in the name.
  *
  * int name[] = "dostuff2";
  * float value = Tango_ConvertFunctionName(name);
  *
  * value will be equal to 543.3828, and allegro.log will contain
  * const float FUNC_DOSTUFF2 = 543.3828;
+
+void Tango_LogUndefinedFunction(float function)
+ * This will log an error indicating the use of an unknown function.
+ * This is meant to be called from __Tango_RunCustomFunction() if
+ * the function is not recognized. It's only useful for debugging,
+ * so it can be considered optional.
+
+void Tango_LogUndefinedVariable(float var)
+ * This will log an error indicating the use of an unknown variable.
+ * It's meant to be called from Tango_GetCustomVar() and Tango_SetCustomVar()
+ * and is useful only for debugging.
 
 
 
@@ -219,17 +247,12 @@ float Tango_ConvertFunctionName(int name[])
 
 ================ Variables ================
 
-@d0 ... @d7
- * Read/write
- * Use this to access Tango_D[].
-
 @a0, @a1
  * Read/write
  * Use these to access the slot's a[0] and a[1].
 
 @x, @y
  * Read/write
-
  * The slot's position on the screen.
 
 @cset, @color
@@ -247,9 +270,9 @@ float Tango_ConvertFunctionName(int name[])
 
 @style
  * Read/write
- * The slot's current style. You should only write to this at the beginning
- * of a string, before any text is printed; changing styles mid-text is
- * likely to cause problems.
+ * The slot's current style. You should only write to this at
+ * the beginning of a string, before any text is printed; changing
+ * styles mid-text may cause problems.
 
 @next
  * Read/write
@@ -285,36 +308,9 @@ float Tango_ConvertFunctionName(int name[])
  * Adds a value to a variable.
 
 
-================ Flow control functions ================
+================ Control functions ================
 
-@while(a1 a2)
- * a1: Condition or number
- * a2: Setter or effect function
- * Executes a2 as long as a1 is nonzero. Runs once a frame.
-
-@if(a1 a2)
-@elseif(a1 a2)
-@else(a2)
- * a1: Condition or number
- * a2: Setter or effect function
- * Execute a2 if a1 is nonzero. @elseif and @else should come
- * immediately after the corresponding @if; they are not guaranteed
- * to work correctly, otherwise.
-
-@waituntil(a1)
- * a1: Condition or number
- * Supends processing of the slot until a1 is nonzero.
-
-
-================ Effect functions ================
-
-These functions perform some function in the game or affect the processing
-of the current slot in a way not covered by other functions. They do not
-return useful values.
-
-@playsfx(a1)
- * a1: Number
- * Play a sound.
+These functions affect the text display in ways not covered by other functions.
 
 @append(a1)
  * a1: Number
@@ -393,7 +389,7 @@ These functions are replaced with text when they run.
  * Inserts the character with the given number. This is similar to
  * inserting character codes; @26 and @char(26) are essentially the same.
  * The main difference is that @char() allows variables and functions
- * to be used. @char(@d0) is legal; @(@d0) is not.
+ * to be used. @char(@a0) is legal; @(@a0) is not.
 
 @number(a1)
  * a1: Number
@@ -413,10 +409,30 @@ These functions are replaced with text when they run.
  * the constant __TANGO_MAX_STRING_FUNC_LENGTH.
 
 
+================ Flow functions ================
+
+@while(a1 a2)
+ * a1: Condition or number
+ * a2: Setter or effect function
+ * Executes a2 as long as a1 is nonzero. Runs once per frame while
+ * the condition is true.
+
+@if(a1 a2)
+@elseif(a1 a2)
+@else(a2)
+ * a1: Condition or number
+ * a2: Setter or effect function
+ * Execute a2 if a1 is nonzero.
+
+@waituntil(a1)
+ * a1: Condition or number
+ * Supends processing of the slot until a1 is nonzero.
+
+
 ================ Condition functions ================
 
 These functions should be used as the first argument to @if(), @elseif(),
-@while(), and @waituntil, but they can also be used as numeric functions.
+@while(), and @waituntil(), but they can also be used as numeric functions.
 They return 1 if the condition is true and 0 if it's false.
 
 @equal(a1 a2)
@@ -460,7 +476,7 @@ They return 1 if the condition is true and 0 if it's false.
  * a1: number
  * Creates a menu option with value a1. a1 should be greater than 0.
  * The maximum number of choices is determined by the constant
- * __TANGO_MAX_MENU_ITEMS
+ * __TANGO_MAX_MENU_ITEMS.
 
 @domenu()
 @domenu(a1)
@@ -477,6 +493,15 @@ They return 1 if the condition is true and 0 if it's false.
  * Suspends processing of the slot until a menu selection is made.
  * Don't use this together with @domenu(); it should be used when
  * a script or another string will create the menu.
+
+
+================ Effect functions ================
+
+These functions perform functions in the game. They do not return useful values.
+
+@playsfx(a1)
+ * a1: Number
+ * Play a sound.
 
 
 
@@ -614,7 +639,7 @@ TANGO_BACKDROP_COLOR_TRANS
  * Related attributes:
  * TANGO_STYLE_TEXT_CSET
  * TANGO_STYLE_TEXT_COLOR
- *   The rectangle's CSet and color. Color is 0-15 within the CSet.
+ *   The rectangle's CSet and color. The color is 0-15 within the CSet.
  * 
  * TANGO_STYLE_BACKDROP_WIDTH
  * TANGO_STYLE_BACKDROP_HEIGHT
@@ -640,7 +665,7 @@ TANGO_BACKDROP_COMBO_TRANS
  * A block of tiles drawn from a combo, either opaque or transparent.
  * 
  * Related attributes:
- * TANGO_STYLE_BACKDROP_TILE
+ * TANGO_STYLE_BACKDROP_COMBO
  *   The combo using the top-left tile of the block.
  * 
  * TANGO_STYLE_BACKDROP_CSET
@@ -728,7 +753,7 @@ int sampleBackdrop[]= {
         0,       // CSet
         4,       // Color
         4, 5,    // X, Y (pixels)
-        192, 80, // Width, height (pixels)
+        184, 72, // Width, height (pixels)
     TANGO_DRAW_TILE,
         400,   // Tile
         5,     // CSet
@@ -755,13 +780,13 @@ seven numbers, in order:
 
 A font definition is an array consisting of the following data, in order:
 
-Type
+Font type
  * Whether this is a built-in, extended, or custom font. Values:
  * TANGO_FONT_BUILTIN
  * TANGO_FONT_EXTENDED
  * TANGO_FONT_CUSTOM
 
-Proportion
+Width type
  * Monospace or proportional. Values:
  * TANGO_FONT_MONOSPACE
  * TANGO_FONT_PROPORTIONAL
@@ -772,7 +797,7 @@ Font ID
 
 Tile start
  * This is the tile used by the first extended character (256) in
- * extended fonts or the first printable character (33) in custom fonts.
+ * extended fonts or the first printable character (33, '!') in custom fonts.
  * Built-in fonts do not use this value.
 
 Character height in pixels
@@ -782,7 +807,7 @@ Space between lines in pixels
 Character widths
  * The width of each character. In monospaced fonts, this is a single value.
  * For proportional fonts, this is a list of widths for each character,
- * starting from space (32). Character 32-126 follow ASCII order;
+ * starting from space (32). Characters 32-126 follow ASCII order;
  * characters 127 and up are arbitrary and vary by font.
 
 
@@ -793,17 +818,19 @@ Be aware that many built-in fonts leave some space above and below the
 glyphs. Extended characters will need to account for this.
 
 
-================ Function name conversion ================
+================ Identifier conversion ================
 
-Tango_ConvertFunctionName() will convert a function name to a value for you.
-If you'd rather do it yourself, here's how. Start by converting each
-character in the name to a number:
+Tango_ConvertFunctionName() and Tango_ConvertVariableName() will convert
+names to numbers for you. If you'd rather do it yourself, here's how.
+Start by converting each character in the name to a number:
 
 a  b  c ... x  y  z  0  1  2  ... 7  8  9
 1  2  3 ... 24 25 26 27 28 29 ... 34 35 36
 
 Multiply each number by 7^n according to its position, add them up, and
-divide by 10000. For instance, for a function called @dostuff2:
+divide by 10000.
+
+For example, for a function called @dostuff2:
 
 d   4   x7 x7 x7 x7 x7 x7 x7 = 3294172 +
 o   15  x7 x7 x7 x7 x7 x7    = 1764735 +

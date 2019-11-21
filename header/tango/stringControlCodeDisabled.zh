@@ -1,11 +1,18 @@
 // tango.zh
-// Beta 2
+// Version 1.0.0
 
-// Dummy function.
+const int __TANGO_CONTROL_CODES_ENABLED = 0;
+
+// Dummy functions
 
 int __Tango_RunStringControlCode(int pos)
 {
-    __Tango_LogMessage(__TANGO_ERROR_SCC_DISABLED, __Tango_Buffer[pos]-1);
-    return 1;
+    // This should never be called. If it is, we'll just end the string here.
+    __Tango_Buffer[pos]=NULL;
+    return 0;
 }
 
+int __Tango_GetNumSCCArgs(int code)
+{
+    return 0;
+}

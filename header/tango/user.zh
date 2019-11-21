@@ -1,11 +1,8 @@
 // tango.zh
-// Beta 2
+// Version 1.0.0
 
 
 // Functions for the user's use that don't really fit elsewhere.
-
-
-float Tango_D[8];
 
 
 void Tango_Start()
@@ -49,6 +46,7 @@ void Tango_ClearSlot(int slot)
     __Tango_SlotData[dataStart+__TSDIDX_SPEED]=TANGO_DEFAULT;
     __Tango_SlotData[dataStart+__TSDIDX_SFX]=TANGO_DEFAULT;
     __Tango_SlotData[dataStart+__TSDIDX_OFFSET]=0;
+    __Tango_SlotData[dataStart+__TSDIDX_MAX_OFFSET]=0;
     __Tango_SlotData[dataStart+__TSDIDX_SCROLLING]=0;
     __Tango_SlotData[dataStart+__TSDIDX_NEXT_STRING]=0;
     __Tango_SlotData[dataStart+__TSDIDX_IGNORE_SPEED_KEYS]=0;
@@ -139,6 +137,21 @@ bool Tango_SlotIsActive(int slot)
     return true;
 }
 
+bool Tango_AnySlotIsActive()
+{
+    int dataStart;
+    int state;
+    for(int i=0; i<__TANGO_NUM_SLOTS; i++)
+    {
+        dataStart=i*__TANGO_SIZEOF_DATA;
+        state=__Tango_SlotData[dataStart+__TSDIDX_STATE];
+        if(!(state==__TANGO_STATE_INACTIVE ||
+          state==__TANGO_STATE_RESERVED))
+            return true;
+    }
+    return false;
+}
+
 int Tango_GetFreeSlot(int type)
 {
     for(int i=0; i<__TANGO_NUM_SLOTS; i++)
@@ -172,6 +185,11 @@ void Tango_SetSlotVar(int slot, int what, float value)
         __Tango_SlotData[slot*__TANGO_SIZEOF_DATA+what]=value;
 }
 
+int Tango_GetCurrentSlot()
+{
+    return __Tango_Data[__TCS_ID];
+}
+
 void Tango_Sync(int value)
 {
     while(true)
@@ -182,7 +200,6 @@ void Tango_Sync(int value)
     }
 }
 
-// There's also the bitmap stuff...
 void Tango_SaveSlotState(int slot, int output)
 {
     int bufStart=__Tango_GetSlotDefData(slot, __TSDEF_START);
@@ -214,6 +231,16 @@ void Tango_SaveSlotState(int slot, int output, int bitmap)
 
 void Tango_RestoreSlotState(int slot, int oldState)
 {
+    // Whether the TANGO_FLAG_FREEZE_SCREEN flag is active may change,
+    // so check it before and after.
+    bool frozenBefore=false;
+    if(Tango_SlotIsActive(slot))
+    {
+        if((__Tango_GetSlotFlags(slot)&TANGO_FLAG_FREEZE_SCREEN)!=0)
+            frozenBefore=true;
+    }
+    
+    // Copy everything back to the internal arrays...
     int bufStart=__Tango_GetSlotDefData(slot, __TSDEF_START);
     int bufSize=__Tango_GetSlotDefData(slot, __TSDEF_LENGTH);
     
@@ -224,6 +251,19 @@ void Tango_RestoreSlotState(int slot, int oldState)
     
     for(int i=0; i<__TANGO_SIZEOF_DATA; i++)
         __Tango_SlotData[i+dataOffset]=oldState[i+bufSize];
+    
+    // The second TANGO_FLAG_FREEZE_SCREEN check.
+    bool frozenAfter=false;
+    if(Tango_SlotIsActive(slot))
+    {
+        if((__Tango_GetSlotFlags(slot)&TANGO_FLAG_FREEZE_SCREEN)!=0)
+            frozenAfter=true;
+    }
+    
+    if(frozenBefore && !frozenAfter)
+        __Tango_DecScreenFreeze();
+    else if(!frozenBefore && frozenAfter)
+        __Tango_IncScreenFreeze();
 }
 
 void Tango_RestoreSlotState(int slot, int oldState, int bitmap)
@@ -243,12 +283,51 @@ void Tango_RestoreSlotState(int slot, int oldState, int bitmap)
 
 float Tango_ConvertFunctionName(int name)
 {
+    int type[]="Function";
+    int prefix[]="FUNC_";
+    return __Tango_ConvertName(name, type, prefix);
+}
+
+float Tango_ConvertVariableName(int name)
+{
+    int type[]="Variable";
+    int prefix[]="VAR_";
+    return __Tango_ConvertName(name, type, prefix);
+}
+
+// Used by Tango_ConvertFunctionName() and Tango_ConvertVariableName()
+float __Tango_ConvertName(int name, int type, int prefix)
+{
+    float value=__Tango_GetConvertedName(name);
+    if(value==-1)
+    {
+        int error[]="%s name '%s' contains invalid characters\n";
+        error[14]='"';
+        error[17]='"';
+        printf(error, type, name);
+    }
+    else if(value==-2)
+    {
+        int error[]="%s name '%s' overflowed\n";
+        error[14]='"';
+        error[17]='"';
+        printf(error, type, name);
+    }
+    else
+        __Tango_PrintConstant(prefix, name, value);
+    
+    return value;
+}
+
+// Used by Tango_ConvertFunctionName() and Tango_ConvertVariableName()
+float __Tango_GetConvertedName(int name)
+{
     float accumulator=0;
+    float prevValue=0;
     int character;
-    int pos;
     
     // Find the value
-    for(pos=0; name[pos]!=NULL && pos<31; pos++)
+    for(int pos=0; name[pos]!=NULL && pos<31; pos++)
     {
         character=name[pos];
         
@@ -257,6 +336,11 @@ float Tango_ConvertFunctionName(int name)
             accumulator*=__TANGO_CODE_FACTOR;
             accumulator+=(character+1-'a')/10000;
         }
+        else if(character>='A' && character<='Z')
+        {
+            accumulator*=__TANGO_CODE_FACTOR;
+            accumulator+=(character+1-'A')/10000;
+        }
         else if(character>='0' && character<='9' && pos>0)
         {
             accumulator*=__TANGO_CODE_FACTOR;
@@ -264,12 +348,23 @@ float Tango_ConvertFunctionName(int name)
         }
         else
             return -1;
+        
+        // Check for overflow
+        if(accumulator<prevValue)
+            return -2;
+        
+        prevValue=accumulator;
     }
     
-    // Print the constant
+    return accumulator;
+}
+
+// Used by Tango_ConvertFunctionName() and Tango_ConvertVariableName()
+void __Tango_PrintConstant(int prefix, int name, float value)
+{
     int upperName[32];
     
-    for(pos=0; pos<31; pos++)
+    for(int pos=0; pos<31; pos++)
     {
         upperName[pos]=LowerToUpper(name[pos]);
         if(name[pos]==NULL)
@@ -278,11 +373,34 @@ float Tango_ConvertFunctionName(int name)
     
     upperName[31]=NULL; // Probably unnecessary
     
-    int format[]="const float FUNC_%s = %s;\n";
+    int format[]="const float %s%s = %s;\n";
     int valueBuf[13];
-    __Tango_FloatToASCII(valueBuf, accumulator, true);
-    printf(format, upperName, valueBuf);
-    
-    return accumulator;
+    __Tango_FloatToASCII(valueBuf, value, true);
+    printf(format, prefix, upperName, valueBuf);
 }
 
+float Tango_GetSlotScrollPos(int slot)
+{
+    return __Tango_SlotData[slot*__TANGO_SIZEOF_DATA+__TSDIDX_OFFSET];
+}
+
+float Tango_GetSlotMaxScrollPos(int slot)
+{
+    int dataStart=slot*__TANGO_SIZEOF_DATA;
+    if(__Tango_SlotData[dataStart+__TSDIDX_STATE]==__TANGO_STATE_ADVANCING)
+        return 0;
+    return __Tango_SlotData[dataStart+__TSDIDX_MAX_OFFSET];
+}
+
+void Tango_ScrollSlot(int slot, float amount)
+{
+    int dataStart=slot*__TANGO_SIZEOF_DATA;
+    
+    if(__Tango_SlotData[dataStart+__TSDIDX_STATE]==__TANGO_STATE_ADVANCING)
+        return;
+    
+    __Tango_SlotData[dataStart+__TSDIDX_OFFSET]=Clamp(
+      __Tango_SlotData[dataStart+__TSDIDX_OFFSET]+amount,
+      0,
+      __Tango_SlotData[dataStart+__TSDIDX_MAX_OFFSET]);
+}

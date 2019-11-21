@@ -1,12 +1,12 @@
 // tango.zh
-// Beta 2
+// Version 1.0.0
 
 
 // Verbose message logging.
 
 void __Tango_LogMessage(int msg, float data)
 {
-    int str[]="tango.zh message: ";
+    int str[]="tango.zh: ";
     TraceS(str);
     
     if(msg==__TANGO_MSG_LOAD_START)
@@ -135,16 +135,25 @@ void __Tango_LogError(int errorNum, int data)
         int str3[]="Message number was was %s\n";
         printf(str3, dataBuf);
     }
+    else if(errorNum==__TANGO_ERROR_UNDEFINED_VAR)
+    {
+        int str2[]="An undefined variable was referenced.";
+        TraceS(str2);
+        TraceNL();
+    }
+    else if(errorNum==__TANGO_ERROR_INCOMPLETE_SCC)
+    {
+        int str2[]="The message contains an incomplete string control code.";
+        TraceS(str2);
+        TraceNL();
+    
+        int str3[]="Error occurred at position %d\n";
+        printf(str3, data);
+    }
     else if(errorNum==__TANGO_ERROR_SCC_DISABLED)
     {
-        int str2[]="Encountered string control code %d, but string control code handling is disabled.\n";
-        printf(str2, data);
-    }
-    else if(errorNum==__TANGO_ERROR_INVALID_VAR)
-    {
-        int str2[]="An invalid variable was referenced.";
+        int str2[]="The message contains a string control code, but string control codes are disabled.";
         TraceS(str2);
         TraceNL();
     }
 }
-

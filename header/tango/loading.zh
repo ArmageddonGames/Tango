@@ -1,5 +1,5 @@
 // tango.zh
-// Beta 2
+// Version 1.0.0
 
 
 // Functions involved in loading text into __Tango_Buffer[].
@@ -134,10 +134,13 @@ void __Tango_LoadIntoBuffer(int src, int srcPtr, int destPtr)
     __Tango_LogMessage(__TANGO_MSG_LOAD_START, src);
     int end=__Tango_GetStringEnd(src);
     int newPos[2]; // Pointer output array for code parsing functions
+    int c;
     
     while(srcPtr<=end)
     {
-        if(src[srcPtr]==__TANGO_CODE_DELIMITER)
+        c=src[srcPtr];
+        
+        if(c==__TANGO_CODE_DELIMITER)
         {
             // Check if it's just @@ first.
             if(src[srcPtr+1]==__TANGO_CODE_DELIMITER)
@@ -170,11 +173,23 @@ void __Tango_LoadIntoBuffer(int src, int srcPtr, int destPtr)
                 }
             }
         }
+        else if(c>NULL && c<' ' && c!=TANGO_CHAR_NEWLINE) // Control code
+        {
+            if(__Tango_LoadStringControlCode(src, srcPtr, destPtr,  newPos))
+            {
+                // Error; stop here.
+                __Tango_SetChar(destPtr, NULL);
+                break;
+            }
+            
+            srcPtr=newPos[0];
+            destPtr=newPos[1];
+        }
         else
         {
-            __Tango_SetChar(destPtr, src[srcPtr]);
+            __Tango_SetChar(destPtr, c);
             
-            if(src[srcPtr]==NULL)
+            if(c==NULL)
                 break;
             
             srcPtr++;
@@ -331,7 +346,7 @@ bool __Tango_ParseArguments(int src, int srcPtr, int destPtr, int ptrOut)
             destPtr=ptrOut[1];
             negative=false;
         }
-        else if(character>='0' && character<='9')
+        else if((character>='0' && character<='9') || character=='.')
         {
             // Number
             float num=__Tango_ReadNumber(src, srcPtr, false, ptrOut);
@@ -535,6 +550,64 @@ int __Tango_SetEndMarker(int destPtr, int func)
     }
 }
 
+bool __Tango_LoadStringControlCode(int src, int srcPtr, int destPtr, int ptrOut)
+{
+    if(__TANGO_CONTROL_CODES_ENABLED==0)
+    {
+        __Tango_LogError(__TANGO_ERROR_SCC_DISABLED, 0);
+        return true;
+    }
+    
+    int code=src[srcPtr];
+    __Tango_Buffer[destPtr]=code;
+    srcPtr++;
+    destPtr++;
+    
+    int numArgs=__Tango_GetNumSCCArgs(code);
+    int arg;
+    
+    for(; numArgs>0; numArgs--)
+    {
+        // ZC stores messages as unsigned chars, but Screen->LoadMessage()
+        // treats them as signed. This has to be worked around.
+        
+        arg=src[srcPtr]-1;
+        if(arg==-1)
+        {
+            __Tango_LogError(__TANGO_ERROR_INCOMPLETE_SCC, srcPtr);
+            return true;
+        }
+        else if(arg<0)
+            arg+=256;
+        srcPtr++;
+        
+        // Arguments are either 1 or 3 bytes. If the first byte is
+        // followed by -1 (or rather, 255), it's 3 bytes.
+        // Both -1 and 255 are checked just in case the behavior of
+        // Screen->LoadMessage() changes in the future.
+        if(src[srcPtr]==-1 || src[srcPtr]==255)
+        {
+            int nextByte=src[srcPtr+1];
+            if(nextByte==0)
+            {
+                __Tango_LogError(__TANGO_ERROR_INCOMPLETE_SCC, srcPtr+1);
+                return true;
+            }
+            else if(nextByte<0)
+                nextByte+=256;
+            arg+=254*nextByte;
+            srcPtr+=2;
+        }
+        
+        __Tango_Buffer[destPtr]=arg;
+        destPtr++;
+    }
+    
+    ptrOut[0]=srcPtr;
+    ptrOut[1]=destPtr;
+    return false;
+}
+
 // Advances srcPtr beyond any spaces in src.
 int __Tango_EatSpaces(int src, int srcPtr)
 {
@@ -543,7 +616,7 @@ int __Tango_EatSpaces(int src, int srcPtr)
     return srcPtr;
 }
 
-// Adds filler characters for text functions to overwrite.
+// Adds filler characters for text functions to be overwritten.
 // Returns the new value of destPtr.
 int __Tango_AddPadding(int function, int fnStart, int destPtr)
 {

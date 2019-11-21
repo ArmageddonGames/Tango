@@ -1,16 +1,46 @@
 tango.zh
-Beta 2
+Version 1.0.0
+
+
+================ Overview ================
+
+This is just a quick overview of all the stuff below - a simple, high-level
+explanation of how Tango works.
+
+If you want to try it out without learning all the details, you can use
+tangoQuickStart.zh. It provides a minimal global script and a couple of
+simple functions. There are a few constants to set for colors, combos,
+and sounds; the defaults are okay for the classic tileset.
+
+To display strings, there are two concepts you need to deal with: text slots
+and styles. If you're familiar with other programming languages, these are
+comparable to structs or classes. There are a fixed (but customizable) number
+of them, and they're identified by integers.
+
+A text slot consists of text, a style reference, and some internal data.
+You can create different types to control drawing order and how much space
+is alloted, but they're fundamentally all the same.
+
+A style is just a collection of settings - the size and color of the text,
+the sound to play as it's printing, and so forth. These are mostly cosmetic
+settings, but there are also a few behavioral flags. These control whether the
+text can be sped up by holding a button, whether the screen is frozen while
+it's displayed, and some other things.
+
+Tango also provides a simple scripting language that can be embedded in
+strings. This allows you to control what text is displayed and how, create
+menus, or even make messages run arbitrary ZScript functions.
 
 
 ================ Basic usage ================
 
 There are three functions that need to be added to the active global script.
-Tango_Start() should be called before the main loop, in the main loop
-before Waitdraw(), and Tango_Update2() in the main loop after Waitdraw().
-It is recommended that Tango_Update1() be called before any other funcions
-so that buttons can be unpressed as soon as possible. Tango_Update2() should
-generally come after everything else that does any drawing, since one normally
-wants message windows drawn on top of everything else.
+Tango_Start() should be called before the main loop, Tango_Update1() in the
+main loop before Waitdraw(), and Tango_Update2() in the main loop after
+Waitdraw(). It is recommended that Tango_Update1() be called before any other
+funcions so that buttons can be unpressed as soon as possible. Tango_Update2()
+should generally come after everything else that does any drawing, since one
+normally wants message windows drawn on top of everything else.
 
 At least one style must be set up. This can be done once per quest or
 on demand. Setting up a style simply involves repeated calls to
@@ -42,9 +72,9 @@ Text slots are defined in __Tango_SlotDefs[]. The slot definition defines
 where in the buffer text is stored and where it's rendered on the offscreen
 bitmap. It is permissible for slots to overlap in both the buffer and
 the bitmap, but be careful about this; using overlapping slots simultaneously
-will definitely cause problems.
+is likely to cause problems.
 
-Slot types serve three possible purposes.
+There are three reasons you might use different slot types.
 
 1: Ordering
 Text slots are drawn to the screen in the order they're defined in
@@ -71,8 +101,13 @@ no obvious reason to make slots of the same type different, but you can
 if you like.
 
 There are two slots and one slot type defined by default. This should
-be sufficient for most quests, but you can add as many slots and types
+be plenty for most quests, but you can add as many slots and types
 as you like. Slot type IDs should be 0 or greater.
+
+To control the number of slots, set __TANGO_NUM_SLOTS, set the size of
+__Tango_SlotData[], and add definitions to __Tango_SlotDefs[]. You may
+also want to set the size of __Tango_Buffer[] to control the amount of
+space available for text.
 
 
 ================ Fonts ================
@@ -103,9 +138,11 @@ defines how the text will be displayed - the font, the backdrop, the sound
 effects, and so forth. Style IDs are integers 0 and up.
 
 Use Tango_SetStyleAttribute() to set each style attribute. You must at least
-set the font and color; every other setting has a valid (but not necessarily
-useful) default. The attributes and expected values are listed in the
-style attributes section of tango.txt.
+set the font and color; every other setting has a valid default. The attributes
+and expected values are listed in the style attributes section of tango.txt.
+
+To control the number of styles available, set __TANGO_NUM_STYLES and the
+size of __Tango_Styles[].
 
 
 ================ Tango code ================
@@ -121,8 +158,14 @@ a function takes no arguments. For example, the string
 would play sound 64 and print (possibly)
   "Hello, Link!"
 
-You can also use @## or @(##)to insert a character directly into the text.
-The string
+Variables are also available. These can be used to set the properties of
+the text. For instance, @speed controls how quickly the text is drawn.
+Each slot has two variables, @a0 and @a1, used to store arbitrary data or
+communicate with ZScript. You can also create your own variables for
+the same purposes.
+
+It's also possible to use @## or @(##)to insert a character directly into
+the text. The string
   "@90@69@76@68@65"
 would be printed as
   "ZELDA"
@@ -130,28 +173,32 @@ This is useful for inserting line breaks (@26) and font characters beyond
 the ASCII range. Also, @0 can be used to terminate the text early; anything
 after @0 won't be printed.
 
-It's possible to create your own functions. These can be numeric, effect, or
-condition functions. The function's name must be a series of lower-case
+
+================ Extending Tango code ================
+
+It's possible to create your own variables and functions. 
+
+The name of the new function or variable must be a series of lower-case
 letters and numbers, and the first character must be a letter. There's no
 set limit on length, but the name must convert to a number small enough
 to be represented in ZScript (no greater than 214747.9999).
 
-To implement a function, you need to get the converted value of its name.
-The easiest way to do this is to use Tango_ConvertFunctionName(). This will
-not only tell you the necessary value, but also write a constant definition
-to allegro.log so that you can simply copy and paste it.
+The name of the function or variable needs to be converted to a number.
+Tango_ConvertFunctionName() and Tango_ConvertVariableName() will do this
+for you; they'll even write the result to allegro.log in a form suitable
+to copy and paste directly into a script. If you'd rather do the math
+yourself, see the section titled "identifier conversion" in tango.txt.
 
-To make Tango handle this function, you'd create a constant with
-the converted value, add it to __Tango_CustomFunctions[], and add
-the implementation to __Tango_RunCustomFunction(). The function argument
-is the function ID. args is an array containing the arguments.
-A function can take up to four arguments. Any unused arguments will be 0.
+User-defined functions can be numeric, effect, or condition functions.
+To make Tango handle a function, add the implementation to
+__Tango_RunCustomFunction(). The function argument is the function ID.
+args is an array containing the arguments. A function can take up to four
+arguments; any unused arguments will be 0. For debugging purposes, you may
+want to call Tango_LogUndefinedFunction() if the function is not recognized.
 
-const float FUNC_DOSTUFF2 = 543.3828;
+A simple example:
 
-int __Tango_CustomFunctions[] = {
-    FUNC_DOSTUFF2
-};
+const float FUNC_DOSTUFF2 = 543.3828; // @dostuff2()
 
 float __Tango_RunCustomFunction(float function, float args)
 {
@@ -160,26 +207,74 @@ float __Tango_RunCustomFunction(float function, float args)
         // This will just return the sum of the arguments.
         return args[0]+args[1];
     }
+    else
+    {
+        // Unknown function
+        Tango_LogUndefinedFunction(function);
+    }
     
     return 0;
 }
 
-Note that it's possible, although very unlikely, for two function names
-to convert to the same number. In that case, you'll just have to rename
-one of them.
 
-The method for converting a function name to a number is described in
-the function name conversion section of tango.txt.
+To implement a variable, use Tango_GetCustomVar() and Tango_SetCustomVar().
+The var argument is the variable id.
+
+A trivial example of a custom variable:
+
+int myVar;
+const float VAR_MYVAR = 4.0891; // @myvar
+
+float Tango_GetCustomVar(int var)
+{
+    if(var==VAR_MYVAR)
+        return myVar;
+    else // Unknown
+    {
+        Tango_LogInvalidVariable(var);
+        return 0;
+    }
+}
+
+void Tango_SetCustomVar(int var, float value)
+{
+    if(var==VAR_MYVAR)
+        myVar=value;
+    else // Unknown
+        Tango_LogInvalidVariable(var);
+}
+
+
+Note that it's possible, although very unlikely, for two function or variable
+names to convert to the same number. In that case, you'll just have to rename
+one of them. It's okay for a variable and a function to have the same name.
+
+
+================ String control codes ================
+
+String control codes are supported only in ZC messages, not ZScript strings.
+They're disabled by default. To enable them, import stringControlCode.zh
+instead of stringControlCodeDisabled.zh.
+
+Control codes cannot be mixed with Tango code. Something like
+  \20\@rand(61, 63)
+or
+  @if(@a0 \16\6)
+will not work.
+
+Note that codes 16 and 17 (add or remove item) don't work quite the same
+as they normally do. The item is simply added to or removed from the inventory;
+no changes are made to any counters.
 
 
 ================ Warnings ================
 
-Text is drawn into offscreen bitmaps one character at a time, even when
-an entire string is drawn at once. Using TANGO_FLAG_INSTANTANEOUS with
-long strings will push you significantly closer to the drawing limit.
-
 Although Tango performs a lot of input validation, catching every problem
 is not feasible. Some errors can hang or crash the game, so be prepared
 for that when making changes.
+
+Text is drawn into offscreen bitmaps one character at a time, even when
+an entire string is drawn at once. Using TANGO_FLAG_INSTANTANEOUS with
+long strings will push you significantly closer to the drawing limit.
 
 

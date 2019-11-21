@@ -1,5 +1,5 @@
 // tango.zh
-// Beta 2
+// Version 1.0.0
 
 
 // Constants and functions relating to functions and variables.
@@ -22,43 +22,35 @@ const float __TANGO_FLOW_WHILE     =     5.8497;
 const float __TANGO_FLOW_WAITUNTIL = 13486.5225;
 
 // Other functions
-const float __TANGO_FUNC_ADD       =    0.0081;
-const float __TANGO_FUNC_OR        =    0.0123;
-const float __TANGO_FUNC_AND       =    0.0151;
-const float __TANGO_FUNC_NOT       =    0.0811;
-const float __TANGO_FUNC_TAB       =    0.0989;
-const float __TANGO_FUNC_CHAR      =    0.1446;
-const float __TANGO_FUNC_GOTO      =    0.3291;
-const float __TANGO_FUNC_LESS      =    0.4513;
-const float __TANGO_FUNC_NEXT      =    0.5235;
-const float __TANGO_FUNC_RAND      =    0.6325;
-const float __TANGO_FUNC_SYNC      =    0.7843;
-const float __TANGO_FUNC_DELAY     =    1.1939;
-const float __TANGO_FUNC_CLOSE     =    1.2192;
-const float __TANGO_FUNC_EQUAL     =    1.8884;
-const float __TANGO_FUNC_APPEND    =    6.1058;
-const float __TANGO_FUNC_CHOICE    =    7.5241;
-const float __TANGO_FUNC_DOMENU    =   10.8066;
-const float __TANGO_FUNC_NUMBER    =   29.0329;
-const float __TANGO_FUNC_PRESSA    =   31.4910;
-const float __TANGO_FUNC_STRING    =   37.4073;
-const float __TANGO_FUNC_GREATER   =  113.9450;
-const float __TANGO_FUNC_ORDINAL   =  208.0657;
-const float __TANGO_FUNC_PLAYSFX   =  209.6041;
-const float __TANGO_FUNC_SUSPEND   =  263.9732;
-const float __TANGO_FUNC_MENUWAIT  = 1158.8044;
-const float __TANGO_FUNC_NOTEQUAL  = 1364.9361;
-const float __TANGO_FUNC_SAVENAME  = 1615.1672;
+const float __TANGO_FUNC_ADD      =    0.0081;
+const float __TANGO_FUNC_OR       =    0.0123;
+const float __TANGO_FUNC_AND      =    0.0151;
+const float __TANGO_FUNC_NOT      =    0.0811;
+const float __TANGO_FUNC_TAB      =    0.0989;
+const float __TANGO_FUNC_CHAR     =    0.1446;
+const float __TANGO_FUNC_GOTO     =    0.3291;
+const float __TANGO_FUNC_LESS     =    0.4513;
+const float __TANGO_FUNC_NEXT     =    0.5235;
+const float __TANGO_FUNC_RAND     =    0.6325;
+const float __TANGO_FUNC_SYNC     =    0.7843;
+const float __TANGO_FUNC_DELAY    =    1.1939;
+const float __TANGO_FUNC_CLOSE    =    1.2192;
+const float __TANGO_FUNC_EQUAL    =    1.8884;
+const float __TANGO_FUNC_APPEND   =    6.1058;
+const float __TANGO_FUNC_CHOICE   =    7.5241;
+const float __TANGO_FUNC_DOMENU   =   10.8066;
+const float __TANGO_FUNC_NUMBER   =   29.0329;
+const float __TANGO_FUNC_PRESSA   =   31.4910;
+const float __TANGO_FUNC_STRING   =   37.4073;
+const float __TANGO_FUNC_GREATER  =  113.9450;
+const float __TANGO_FUNC_ORDINAL  =  208.0657;
+const float __TANGO_FUNC_PLAYSFX  =  209.6041;
+const float __TANGO_FUNC_SUSPEND  =  263.9732;
+const float __TANGO_FUNC_MENUWAIT = 1158.8044;
+const float __TANGO_FUNC_NOTEQUAL = 1364.9361;
+const float __TANGO_FUNC_SAVENAME = 1615.1672;
 
 // Variables
-const float __TANGO_VAR_D0      =  0.0055;
-const float __TANGO_VAR_D1      =  0.0056;
-const float __TANGO_VAR_D2      =  0.0057;
-const float __TANGO_VAR_D3      =  0.0058;
-const float __TANGO_VAR_D4      =  0.0059;
-const float __TANGO_VAR_D5      =  0.0060;
-const float __TANGO_VAR_D6      =  0.0061;
-const float __TANGO_VAR_D7      =  0.0062;
 const float __TANGO_VAR_A0      =  0.0034;
 const float __TANGO_VAR_A1      =  0.0035;
 const float __TANGO_VAR_X       =  0.0024;
@@ -73,12 +65,12 @@ const float __TANGO_VAR_CHOSEN  =  7.5754;
 const float __TANGO_VAR_DEFAULT = 57.0513;
 
 // Data markers
-const int __TANGO_NUM_MARKER = -100;
-const int __TANGO_VAR_MARKER = -200;
-const int __TANGO_SETTER_MARKER = -300;
-const int __TANGO_FUNC_MARKER = -400;
+const int __TANGO_NUM_MARKER      = -100;
+const int __TANGO_VAR_MARKER      = -200;
+const int __TANGO_SETTER_MARKER   = -300;
+const int __TANGO_FUNC_MARKER     = -400;
 const int __TANGO_FUNC_END_MARKER = -500;
-const int __TANGO_FLOW_MARKER = -600;
+const int __TANGO_FLOW_MARKER     = -600;
 const int __TANGO_FLOW_END_MARKER = -700;
 
 
@@ -103,20 +95,20 @@ int __Tango_RunFlowControl(int pos)
     {
         if(condition)
         {
-            __Tango_Data[__TDIDX_CONDITION_MET]=1;
+            __Tango_SetCurrSlotData(__TSDIDX_CONDITION_MET, 1);
             if(__Tango_Buffer[pos+2+argLength]==__TANGO_FUNC_MARKER)
                 ret=__Tango_RunFunction(pos+2+argLength, false);
             else
                 __Tango_RunSetter(pos+2+argLength, false);
         }
         else
-            __Tango_Data[__TDIDX_CONDITION_MET]=0;
+            __Tango_SetCurrSlotData(__TSDIDX_CONDITION_MET, 0);
     }
     else if(type==__TANGO_FLOW_ELSEIF)
     {
-        if(condition && __Tango_Data[__TDIDX_CONDITION_MET]==0)
+        if(condition && __Tango_GetCurrSlotData(__TSDIDX_CONDITION_MET)==0)
         {
-            __Tango_Data[__TDIDX_CONDITION_MET]=1;
+            __Tango_SetCurrSlotData(__TSDIDX_CONDITION_MET, 1);
             if(__Tango_Buffer[pos+2+argLength]==__TANGO_FUNC_MARKER)
                 ret=__Tango_RunFunction(pos+2+argLength, false);
             else
@@ -125,7 +117,7 @@ int __Tango_RunFlowControl(int pos)
     }
     else if(type==__TANGO_FLOW_ELSE)
     {
-        if(__Tango_Data[__TDIDX_CONDITION_MET]==0)
+        if(__Tango_GetCurrSlotData(__TSDIDX_CONDITION_MET)==0)
         {
             if(__Tango_Buffer[pos+2]==__TANGO_FUNC_MARKER)
                 ret=__Tango_RunFunction(pos+2, false);
@@ -168,7 +160,7 @@ int __Tango_RunFlowControl(int pos)
 
 
 // Runs @set or @inc. If clear is true, the setter and its arguments
-// in __Tango_Buffer[] will be deleted.
+// will be deleted from in __Tango_Buffer[] afterward.
 void __Tango_RunSetter(int pos, bool clear)
 {
     int type=__Tango_Buffer[pos+1];
@@ -317,22 +309,7 @@ int __Tango_RunFunction(int pos, bool clear)
     
     // Not a built-in function; check custom functions.
     if(!found)
-    {
-        int numCustomFunctions=SizeOfArray(__Tango_CustomFunctions);
-        
-        for(int i=0; i<numCustomFunctions; i++)
-        {
-            if(function==__Tango_CustomFunctions[i])
-            {
-                ret=__Tango_RunCustomFunction(function, args);
-                found=true;
-                break;
-            }
-        }
-        
-        if(!found)
-            __Tango_LogError(__TANGO_ERROR_UNDEFINED_FUNCTION, function);
-    }
+        ret=__Tango_RunCustomFunction(function, args);
     
     if(negative)
         ret=-ret;
@@ -638,12 +615,7 @@ float __Tango_GetVar(int var)
         var=-var;
     }
     
-    if(var>=__TANGO_VAR_D0 && var<=__TANGO_VAR_D7)
-    {
-        int index=(var-__TANGO_VAR_D0)*10000;
-        ret=Tango_D[index];
-    }
-    else if(var==__TANGO_VAR_A0)
+    if(var==__TANGO_VAR_A0)
         ret=__Tango_GetCurrSlotData(TANGO_VAR_A0);
     else if(var==__TANGO_VAR_A1)
         ret=__Tango_GetCurrSlotData(TANGO_VAR_A1);
@@ -669,7 +641,7 @@ float __Tango_GetVar(int var)
     else if(var==__TANGO_VAR_CHOSEN)
         ret=__Tango_Data[__TDIDX_LAST_CHOICE];
     else
-        __Tango_LogError(__TANGO_ERROR_INVALID_VAR, 0);
+        ret=Tango_GetCustomVar(var);
     
     if(negative)
         ret=-ret;
@@ -682,12 +654,7 @@ void __Tango_SetVar(int var, float value)
 {
     int dataStart=__Tango_Data[__TCS_DATA_START];
     
-    if(var>=__TANGO_VAR_D0 && var<=__TANGO_VAR_D7)
-    {
-        int index=(var-__TANGO_VAR_D0)*10000;
-        Tango_D[index]=value;
-    }
-    else if(var==__TANGO_VAR_A0)
+    if(var==__TANGO_VAR_A0)
         __Tango_SetCurrSlotData(TANGO_VAR_A0, value);
     else if(var==__TANGO_VAR_A1)
         __Tango_SetCurrSlotData(TANGO_VAR_A1, value);
@@ -724,7 +691,7 @@ void __Tango_SetVar(int var, float value)
     else if(var==__TANGO_VAR_NEXT)
         __Tango_SetCurrSlotData(__TSDIDX_NEXT_STRING, value);
     else
-        __Tango_LogError(__TANGO_ERROR_INVALID_VAR, 0);
+        Tango_SetCustomVar(var, value);
 }
 
 // Fills the string with filler characters from pos to end, inclusive.
@@ -735,3 +702,14 @@ void __Tango_Delete(int pos, int end)
         __Tango_Buffer[pos]=__TANGO_CHAR_FILLER;
 }
 
+// Log an error when an unknown function is called.
+void Tango_LogUndefinedFunction(float function)
+{
+    __Tango_LogError(__TANGO_ERROR_UNDEFINED_FUNCTION, function);
+}
+
+// Log an error when an unknown variable is used.
+void Tango_LogUndefinedVariable(float var)
+{
+    __Tango_LogError(__TANGO_ERROR_UNDEFINED_VAR, 0);
+}
