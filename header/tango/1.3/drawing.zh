@@ -1,5 +1,5 @@
 // tango.zh
-// Version 1.3.1
+// Version 1.3.2
 
 
 // Functions used to draw to the screen or an offscreen bitmap.
@@ -346,23 +346,4 @@ void __Tango_ClearSlotBitmap(int slot)
     Screen->SetRenderTarget(__TANGO_BITMAP);
     Screen->Rectangle(0, x+1, y+1, x+width-2, y+height-2,
                       0, -1, 0, 0, 0, true, OP_OPAQUE);
-}
-
-// Used in rendering centered text. Draws the line currently
-// being processed. Used both to draw the line to the screen
-// and to transfer it within the bitmap.
-void __Tango_DrawCurrentLine(int x, int y)
-{
-    int defStart=__Tango_Data[__TCS_DEF_START];
-    int srcX=__Tango_SlotDefs[defStart+__TSDEF_X];
-    int srcY=__Tango_SlotDefs[defStart+__TSDEF_Y]+
-               __Tango_SlotDefs[defStart+__TSDEF_HEIGHT]-16;
-    int width=__Tango_GetCurrStyleData(TANGO_STYLE_TEXT_WIDTH);
-    int destX=0;//srcX+(width-(__Tango_SlotData[dataStart+__TSDIDX_CHAR_X]-srcX))/2;
-    
-    Screen->DrawBitmap(0, __TANGO_BITMAP, srcX, srcY, width, 16,
-                       destX, 0,//__Tango_SlotData[dataStart+__TSDIDX_CHAR_Y],
-                       width, 16, 0, true);
-    Screen->Rectangle(0, srcX, srcY, srcX+width, srcY+16, 0, -1, 0, 0, 0,
-                      true, OP_OPAQUE);
 }

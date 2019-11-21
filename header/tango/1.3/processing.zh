@@ -1,5 +1,5 @@
 // tango.zh
-// Version 1.3.1
+// Version 1.3.2
 
 
 // Constants and functions related to processing strings.
@@ -214,6 +214,7 @@ void __Tango_UpdateCurrentSlot()
         if(__Tango_PressAdvance(timer))
         {
             state=__TANGO_STATE_ACTIVE;
+            __Tango_SetCurrSlotData(__TSDIDX_COUNTER, 0);
             __Tango_SetCurrSlotData(__TSDIDX_STATE, __TANGO_STATE_ACTIVE);
             __Tango_Data[__TDIDX_GLOBAL_FLAGS]|=__TANGO_GFLAG_UNPRESS_ADVANCE;
             

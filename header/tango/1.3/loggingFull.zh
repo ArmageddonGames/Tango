@@ -1,5 +1,5 @@
 // tango.zh
-// Version 1.3.1
+// Version 1.3.2
 
 
 // Verbose message logging.
@@ -115,7 +115,9 @@ void __Tango_LogError(int errorNum, float data1, float data2)
     int str[]="tango.zh error: ";
     TraceS(str);
     
-    if(errorNum==__TANGO_ERROR_SLOT_STATE_ARRAY_TOO_SMALL)
+    if(errorNum==__TANGO_ERROR_NO_FONT)
+        __Tango_LogNoFont(data1, data2);
+    else if(errorNum==__TANGO_ERROR_SLOT_STATE_ARRAY_TOO_SMALL)
         __Tango_LogSlotStateArrayTooSmall(data1, data2);
     else if(errorNum==__TANGO_ERROR_MENU_STATE_ARRAY_TOO_SMALL)
         __Tango_LogMenuStateArrayTooSmall(data1, data2);
@@ -161,6 +163,16 @@ void __Tango_LogInvalidStyle(float data)
     __Tango_FloatToASCII(numBuf, data, true);
     int str2[]="Style was %s; valid styles are integers from 0 to %d\n";
     printf(str2, numBuf, __TANGO_NUM_STYLES-1);
+}
+
+void __Tango_LogNoFont(int slot, int style)
+{
+    int str[]="A slot was activated using a style with no font set.";
+    TraceS(str);
+    TraceNL();
+    
+    int str2[]="Slot was %d; style was %d\n";
+    printf(str2, slot, style);
 }
 
 void __Tango_LogInvalidSlot(float data)

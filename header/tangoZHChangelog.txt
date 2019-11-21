@@ -1,6 +1,10 @@
 tango.zh
-Version 1.3.1
+Version 1.3.2
 
+1.3.2 (2019-08-01)
+* Fixed an erroneous delay after the player responds to @pressa().
+* Activating a slot using a style with no font set now reports an error.
+* Replaced tango.txt, tangoUsage.txt, and tangoFAQ.txt with HTML documentation.
 
 1.3.1 (2017-12-27)
 * Corrected subdirectory in the main file's import statements.

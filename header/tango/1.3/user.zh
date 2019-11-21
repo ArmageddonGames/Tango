@@ -1,5 +1,5 @@
 // tango.zh
-// Version 1.3.1
+// Version 1.3.2
 
 
 // Functions for the user's use that don't really fit elsewhere.
@@ -113,6 +113,12 @@ void Tango_ActivateSlot(int slot)
 {
     if(!__Tango_ValidateSlot(slot))
         return;
+    
+    if(Tango_GetSlotStyleAttribute(slot, TANGO_STYLE_TEXT_FONT)==0)
+    {
+        __Tango_LogError(__TANGO_ERROR_NO_FONT, slot, Tango_GetSlotStyle(slot));
+        return;
+    }
     
     int dataStart=slot*__TANGO_SIZEOF_DATA;
     
