@@ -10,53 +10,25 @@ ffc script Zelda
         
         while(true)
         {
-            if(!talking && !linkAlreadyTalking && Link->PressA)
+            if(!talking && !linkAlreadyTalking && LinkWantsToTalk(this))
             {
-                if(Link->Dir==DIR_UP)
-                {
-                    if(Abs(Link->X-this->X)<8 && Abs(Link->Y-8-this->Y)<8)
-                        talking=true;
-                }
-                else if(Link->Dir==DIR_DOWN)
-                {
-                    if(Abs(Link->X-this->X)<8 && Abs(Link->Y+16-this->Y)<8)
-                        talking=true;
-                }
-                else if(Link->Dir==DIR_LEFT)
-                {
-                    if(Abs(Link->X-16-this->X)<8 && Abs(Link->Y-this->Y)<8)
-                        talking=true;
-                }
-                else
-                {
-                    if(Abs(Link->X+19-this->X)<8 && Abs(Link->Y-this->Y)<8)
-                        talking=true;
-                }
+                // Get a string
+                stringID1=Tango_GetFreeString(TANGO_STRING_NORMAL);
+                if(stringID1==TANGO_INVALID)
+                    continue;
                 
-                if(talking)
-                {
-                    // Get a string
-                    stringID1=Tango_GetFreeString(TANGO_STRING_NORMAL);
-                    if(stringID1==TANGO_INVALID)
-                    {
-                        talking=false;
-                        continue;
-                    }
-                    
-                    // Reserve it so the next call to Tango_GetFreeString()
-                    // doesn't return the same one
-                    Tango_ReserveString(stringID1);
-                    
-                    // Get another one
-                    stringID2=Tango_GetFreeString(TANGO_STRING_NORMAL);
-                    if(stringID2==TANGO_INVALID)
-                    {
-                        talking=false;
-                        continue;
-                    }
-                    
-                    ShowMessages(stringID1, stringID2, message1, message2);
-                }
+                // Reserve it so the next call to Tango_GetFreeString()
+                // doesn't return the same one
+                Tango_ReserveString(stringID1);
+                
+                // Get another one
+                stringID2=Tango_GetFreeString(TANGO_STRING_NORMAL);
+                if(stringID2==TANGO_INVALID)
+                    continue;
+                
+                talking=true;
+                linkAlreadyTalking=true;
+                ShowMessages(stringID1, stringID2, message1, message2);
             }
             
             if(talking)

@@ -1,5 +1,6 @@
-// tango.zh alpha 1
+// tango.zh alpha 2
 // Minimal global script. You probably don't actually want to use this.
+
 
 global script TangoActiveScript
 {

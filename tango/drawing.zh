@@ -1,6 +1,8 @@
-// tango.zh alpha 1
+// tango.zh alpha 2
+// Constants and functions related to drawing to the screen or an
+// offscreen bitmap.
 
-// Frame drawing stuff
+// Complex frame drawing constants
 const int TANGO_DRAW_TILE       = 1;
 const int TANGO_DRAW_TILE_TRANS = 2;
 const int TANGO_DRAW_RECT       = 3;
@@ -23,13 +25,15 @@ const int TANGO_RECT_HEIGHT = 6;
 
 const int __TANGO_SIZEOF_DRAW_DATA = 7;
 
+
+
 void __Tango_DrawComplexBackdrop(int backdrop, float x, float y)
 {
     int opacity;
     
     for(int baseIndex=0;
-        backdrop[baseIndex]!=TANGO_DRAW_END;
-        baseIndex+=__TANGO_SIZEOF_DRAW_DATA)
+      backdrop[baseIndex]!=TANGO_DRAW_END;
+      baseIndex+=__TANGO_SIZEOF_DRAW_DATA)
     {
         if(backdrop[baseIndex]<=TANGO_DRAW_TILE_TRANS)
         {
@@ -57,19 +61,17 @@ void __Tango_DrawComplexBackdrop(int backdrop, float x, float y)
                 opacity=OP_OPAQUE;
             
             Screen->Rectangle(__TANGO_DRAWING_LAYER,
-                x+backdrop[baseIndex+TANGO_RECT_X]+1,
-                y+backdrop[baseIndex+TANGO_RECT_Y]+1,
-                x+backdrop[baseIndex+TANGO_RECT_X]+backdrop[baseIndex+TANGO_RECT_WIDTH]-2,
-                y+backdrop[baseIndex+TANGO_RECT_Y]+backdrop[baseIndex+TANGO_RECT_HEIGHT]-2,
-                backdrop[baseIndex+TANGO_RECT_CSET]*16+backdrop[baseIndex+TANGO_RECT_COLOR],
-                -1, 0, 0, 0, true, opacity);
+              x+backdrop[baseIndex+TANGO_RECT_X]+1,
+              y+backdrop[baseIndex+TANGO_RECT_Y]+1,
+              x+backdrop[baseIndex+TANGO_RECT_X]+backdrop[baseIndex+TANGO_RECT_WIDTH]-2,
+              y+backdrop[baseIndex+TANGO_RECT_Y]+backdrop[baseIndex+TANGO_RECT_HEIGHT]-2,
+              backdrop[baseIndex+TANGO_RECT_CSET]*16+backdrop[baseIndex+TANGO_RECT_COLOR],
+              -1, 0, 0, 0, true, opacity);
         }
     }
 }
 
 // Draws a single character and returns the width of the character drawn.
-// Assumes character is at least 32 (i.e. in the printable character range)
-// and that the target bitmap is already set.
 int __Tango_PutChar(int character, int font, int x, int y, int cset, int color)
 {
     if(character!=TANGO_CHAR_SPACE) // Spaces don't need drawn...
@@ -91,6 +93,7 @@ int __Tango_PutChar(int character, int font, int x, int y, int cset, int color)
         }
         else // Custom font
         {
+            // TODO completely untested
             int tile=font[__TANGO_FONT_START_TILE]+character+__TANGO_FONT_ASCII_TO_CUSTOM;
             Screen->FastTile(0, x, y, tile, cset, OP_OPAQUE);
         }
@@ -99,10 +102,14 @@ int __Tango_PutChar(int character, int font, int x, int y, int cset, int color)
     return __Tango_GetCharacterWidth(character, font);
 }
 
-void __Tango_DrawToScreen(int stringID, int dataStart)
+
+// Draws the current string's portion of the bitmap to the screen.
+void __Tango_DrawToScreen()
 {
     // Draw the backdrop first
-    int styleStart=__Tango_StringData[dataStart+__TANGO_DATA_STYLE]*__TANGO_SIZEOF_STYLE;
+    int defStart=__Tango_Data[__TANGO_IDX_CURRSTR_DEF_START];
+    int dataStart=__Tango_Data[__TANGO_IDX_CURRSTR_DATA_START];
+    int styleStart=__Tango_Data[__TANGO_IDX_CURRSTR_STYLE_START]; //__Tango_StringData[dataStart+__TANGO_DATA_STYLE]*__TANGO_SIZEOF_STYLE;
     int backdrop=__Tango_Styles[styleStart+TANGO_STYLE_BACKDROP_TYPE];
     int screenX=__Tango_StringData[dataStart+__TANGO_DATA_SCREEN_X];
     int screenY=__Tango_StringData[dataStart+__TANGO_DATA_SCREEN_Y];
@@ -156,8 +163,8 @@ void __Tango_DrawToScreen(int stringID, int dataStart)
     int stringX=screenX+__Tango_Styles[styleStart+TANGO_STYLE_TEXT_X];
     int stringY=screenY+__Tango_Styles[styleStart+TANGO_STYLE_TEXT_Y];
     
-    int bitmapX=__TANGO_STRING_DEFS[stringID*__TANGO_SIZEOF_STRDEF+__TANGO_STRDEF_X];
-    int bitmapY=__TANGO_STRING_DEFS[stringID*__TANGO_SIZEOF_STRDEF+__TANGO_STRDEF_Y]+
+    int bitmapX=__TANGO_STRING_DEFS[defStart+__TANGO_STRDEF_X];
+    int bitmapY=__TANGO_STRING_DEFS[defStart+__TANGO_STRDEF_Y]+
                     __Tango_StringData[dataStart+__TANGO_DATA_OFFSET];
     
     int width=__Tango_Styles[styleStart+TANGO_STYLE_TEXT_WIDTH];
@@ -193,21 +200,21 @@ void __Tango_DrawToScreen(int stringID, int dataStart)
 
 void __Tango_DrawMenuCursor()
 {
-    int pos=__Tango_Data[__TANGO_IDX_MENU_CURSOR]-1;
+    int pos=__Tango_Data[__TANGO_IDX_MENU_CURSOR_POS];
     int dataStart=__TANGO_IDX_CHOICE_DATA+pos*__TANGO_SIZEOF_CHOICE;
-    int styleStart=__Tango_Data[__TANGO_IDX_MENU_STYLE];
-    int x=__Tango_Data[dataStart+__TANGO_CHOICE_X];
-    int y=__Tango_Data[dataStart+__TANGO_CHOICE_Y];
     
     Screen->DrawCombo(__TANGO_DRAWING_LAYER,
-                      __Tango_Data[dataStart+__TANGO_CHOICE_X],
-                      __Tango_Data[dataStart+__TANGO_CHOICE_Y],
-                      __Tango_Styles[styleStart+TANGO_STYLE_CURSOR_COMBO],
-                      1, 1,
-                      __Tango_Styles[styleStart+TANGO_STYLE_CURSOR_CSET],
-                      -1, -1, 0, 0, 0, 0, 0, true, OP_OPAQUE);
+      __Tango_Data[dataStart+__TANGO_CHOICE_X],
+      __Tango_Data[dataStart+__TANGO_CHOICE_Y],
+      __Tango_Data[__TANGO_IDX_MENU_CURSOR_COMBO],
+      __Tango_Data[__TANGO_IDX_MENU_CURSOR_WIDTH],
+      __Tango_Data[__TANGO_IDX_MENU_CURSOR_HEIGHT],
+      __Tango_Data[__TANGO_IDX_MENU_CURSOR_CSET],
+      -1, -1, 0, 0, 0, 0, 0, true, OP_OPAQUE);
 }
 
+
+// Clears a string's area of the offscreen bitmap.
 void __Tango_ClearStringBitmap(int stringID)
 {
     int defStart=stringID*__TANGO_SIZEOF_STRDEF;

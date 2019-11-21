@@ -12,6 +12,9 @@ global script DemoActiveScript
 {
     void run()
     {
+        Tango_Start();
+        linkAlreadyTalking=false;
+        
         while(true)
         {
             if(Link->Action==LA_SCROLLING)

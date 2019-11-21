@@ -1,0 +1,10 @@
+// tango.zh alpha 2
+// Different types of messages that might be logged.
+
+const int __TANGO_MSG_LOAD_START = 1;
+const int __TANGO_MSG_LOAD_END = 2;
+
+const int __TANGO_ERROR_OVERFLOW = 1;
+const int __TANGO_ERROR_BAD_CHARACTER = 2;
+const int __TANGO_ERROR_BAD_FUNCTION = 3;
+const int __TANGO_ERROR_TOO_MANY_ARGS = 4;

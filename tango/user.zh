@@ -1,18 +1,26 @@
-// tango.zh alpha 1
-// Functions for the user's use.
+// tango.zh alpha 2
+// Functions for the user's use that don't really fit elsewhere.
+
+
+float Tango_D[8];
+
+
 
 void Tango_Start()
 {
-    // TODO
+    Tango_InitializeMenu();
+    for(int i=0; i<__TANGO_NUM_STRINGS; i++)
+        Tango_ClearString(i);
 }
+
 
 void Tango_ClearString(int stringID)
 {
     int dataStart=stringID*__TANGO_SIZEOF_DATA;
     int defStart=stringID*__TANGO_SIZEOF_STRDEF;
-    int pos=__Tango_GetStringDefData(stringID, __TANGO_STRDEF_START);
+    int pos=__TANGO_STRING_DEFS[defStart+__TANGO_STRDEF_START];
     
-    __Tango_StringBuffer[pos]=TANGO_CHAR_NULL;
+    __Tango_StringBuffer[pos]=NULL;
     
     __Tango_StringData[dataStart+__TANGO_DATA_STYLE]=TANGO_INVALID;
     __Tango_StringData[dataStart+__TANGO_DATA_STATE]=__TANGO_STATE_INACTIVE;
@@ -31,6 +39,7 @@ void Tango_ClearString(int stringID)
     __Tango_StringData[dataStart+TANGO_DATA_A1]=0;
 }
 
+
 bool Tango_ReserveString(int stringID)
 {
     int dataStart=stringID*__TANGO_SIZEOF_DATA;
@@ -44,12 +53,14 @@ bool Tango_ReserveString(int stringID)
     return false;
 }
 
+
 void Tango_SetStringPosition(int stringID, int x, int y)
 {
     int dataStart=stringID*__TANGO_SIZEOF_DATA;
     __Tango_StringData[dataStart+__TANGO_DATA_SCREEN_X]=x;
     __Tango_StringData[dataStart+__TANGO_DATA_SCREEN_Y]=y;
 }
+
 
 void Tango_ActivateString(int stringID)
 {
@@ -66,6 +77,7 @@ void Tango_ActivateString(int stringID)
     }
 }
 
+
 bool Tango_StringIsVisible(int stringID)
 {
     int dataStart=stringID*__TANGO_SIZEOF_DATA;
@@ -76,6 +88,7 @@ bool Tango_StringIsVisible(int stringID)
     return true;
 }
 
+
 int Tango_GetFreeString(int type)
 {
     for(int i=0; i<__TANGO_NUM_STRINGS; i++)
@@ -83,13 +96,14 @@ int Tango_GetFreeString(int type)
         if(__Tango_StringData[i*__TANGO_SIZEOF_DATA+__TANGO_DATA_STATE]!=__TANGO_STATE_INACTIVE)
             continue;
         
-        if(__TANGO_STRING_DEFS[i*__TANGO_SIZEOF_STRDEF+__TANGO_STRDEF_SIZE]==type ||
+        if(__TANGO_STRING_DEFS[i*__TANGO_SIZEOF_STRDEF+__TANGO_STRDEF_TYPE]==type ||
            type==TANGO_STRING_ANY)
             return i;
     }
     
     return TANGO_INVALID;
 }
+
 
 int Tango_GetFreeString()
 {
@@ -101,6 +115,7 @@ float Tango_GetStringData(int stringID, int what)
 {
     return __Tango_StringData[stringID*__TANGO_SIZEOF_DATA+what];
 }
+
 
 void Tango_SetStringData(int stringID, int what, float value)
 {

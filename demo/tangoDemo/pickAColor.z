@@ -1,0 +1,53 @@
+// Demo of @string and non-text-based menus.
+
+ffc script PickAColor
+{
+    void run(int message)
+    {
+        while(true)
+        {
+            if(!linkAlreadyTalking && LinkWantsToTalk(this))
+                GetColorChoice(message);
+            
+            Waitframe();
+        }
+    }
+    
+    void GetColorChoice(int message)
+    {
+        int stringID;
+        
+        int purple[]="purple";
+        int orange[]="orange";
+        int blue[]="blue";
+        
+        int choiceX[]={ 192, 160, 176 };
+        int choiceY[]={ 80, 96, 112 };
+        int choiceStrings[]={ purple, orange, blue };
+        
+        Tango_D[0]=0;
+        stringID=ShowMessage(message, TANGO_STRING_NORMAL, STYLE_PLAIN, 32, 32);
+        
+        // The menu needs to be initialized before the string
+        // gets to @waituntil(@chosen)
+        Tango_InitializeMenu();
+        Tango_SetMenuCursor(706, 0, 2, 2);
+        Tango_SetMenuSFX(66, 67);
+        for(int i=0; i<3; i++)
+            Tango_AddMenuChoice(i+1, choiceX[i], choiceY[i]);
+        
+        // The string will set Tango_D[0] to 1 when the menu should start
+        while(Tango_D[0]==0)
+            Waitframe();
+        Tango_ActivateMenu();
+        while(Tango_MenuIsActive())
+            Waitframe();
+        
+        // Load the value to pass to @string
+        Tango_SetStringData(stringID, TANGO_DATA_A0,
+                            choiceStrings[Tango_GetLastMenuChoice()-1]);
+        
+        while(Tango_StringIsVisible(stringID))
+            Waitframe();
+    }
+}

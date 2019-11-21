@@ -1,4 +1,4 @@
-// Sword pickup script. Displayed an "item obtained" message.
+// Sword pickup script. Displays an "item obtained" message.
 
 item script SwordPickup
 {
@@ -7,7 +7,7 @@ item script SwordPickup
         // Item obtained
         // +Wood
         // Followed by commands to move up, wait, and move back down
-        int string[]="Item obtained@char(25)@char(127)Wood@while(@greater(@y 130) @set(@y @add(@y -3)))@delay(120)@while(@less(@y 168) @set(@y @add(@y 3)))";
+        int string[]="Item obtained@char(25)@char(127)Wood@while(@greater(@y 130) @increment(@y -3))@delay(120)@while(@less(@y 168) @increment(@y 3))";
         ShowString(string, TANGO_STRING_POPUP, STYLE_POPUP, 144, 168);
     }
 }

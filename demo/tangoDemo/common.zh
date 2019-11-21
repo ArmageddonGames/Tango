@@ -31,3 +31,33 @@ int ShowMessage(int message, int type, int style, float x, float y)
     
     return stringID;
 }
+
+// Used by NPCs.
+bool LinkWantsToTalk(ffc this)
+{
+    if(!Link->PressA)
+        return false;
+    
+    if(Link->Dir==DIR_UP)
+    {
+        if(Abs(Link->X-this->X)<8 && Abs(Link->Y-8-this->Y)<8)
+            return true;
+    }
+    else if(Link->Dir==DIR_DOWN)
+    {
+        if(Abs(Link->X-this->X)<8 && Abs(Link->Y+16-this->Y)<8)
+            return true;
+    }
+    else if(Link->Dir==DIR_LEFT)
+    {
+        if(Abs(Link->X-16-this->X)<8 && Abs(Link->Y-this->Y)<8)
+            return true;
+    }
+    else
+    {
+        if(Abs(Link->X+16-this->X)<8 && Abs(Link->Y-this->Y)<8)
+            return true;
+    }
+    
+    return false;
+}

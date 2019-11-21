@@ -1,5 +1,7 @@
-// tango.zh alpha 1
+// tango.zh alpha 2
+// Style-related constants and functions.
 
+// Style attributes
 const int TANGO_STYLE_BACKDROP_TYPE           = 0; // TANGO_BACKDROP_*
 const int TANGO_STYLE_BACKDROP_DATA           = 1; // Complex only
 const int TANGO_STYLE_BACKDROP_COLOR          = 1; // Color only
@@ -20,25 +22,34 @@ const int TANGO_STYLE_TEXT_END_SFX            = 14;
 const int TANGO_STYLE_CURSOR_COMBO            = 15; // Settings for selection cursor
 const int TANGO_STYLE_CURSOR_CSET             = 16; 
 const int TANGO_STYLE_CURSOR_WIDTH            = 17;
-const int TANGO_STYLE_MORE_COMBO              = 18; // Settings for "Press A for more"
-const int TANGO_STYLE_MORE_CSET               = 19;
-const int TANGO_STYLE_MORE_X                  = 20;
-const int TANGO_STYLE_MORE_Y                  = 21;
-const int TANGO_STYLE_FLAGS                   = 22;
-const int __TANGO_SIZEOF_STYLE                = 23; // Size of style data
+const int TANGO_STYLE_CURSOR_MOVE_SFX        = 18;
+const int TANGO_STYLE_CURSOR_SELECT_SFX       = 19;
+const int TANGO_STYLE_MORE_COMBO              = 20; // Settings for "Press A for more"
+const int TANGO_STYLE_MORE_CSET               = 21;
+const int TANGO_STYLE_MORE_X                  = 22;
+const int TANGO_STYLE_MORE_Y                  = 23;
+const int TANGO_STYLE_FLAGS                   = 24;
+const int __TANGO_SIZEOF_STYLE                = 25; // Size of style data
 
-const int TANGO_FLAG_ENABLE_SPEEDUP     = 00001b;
-const int TANGO_FLAG_ENABLE_SUPER_SPEED = 00010b;
-const int TANGO_FLAG_AUTO_ADVANCE       = 00100b;
-const int TANGO_FLAG_CARRY_OVER         = 01000b;
-const int TANGO_FLAG_BLOCK_INPUT        = 10000b;
+// Style flags
+const int TANGO_FLAG_ENABLE_SPEEDUP     = 00000001b;
+const int TANGO_FLAG_ENABLE_SUPER_SPEED = 00000010b;
+const int TANGO_FLAG_AUTO_ADVANCE       = 00000100b;
+const int TANGO_FLAG_CARRY_OVER         = 00001000b;
+const int TANGO_FLAG_BLOCK_INPUT        = 00010000b;
+const int TANGO_FLAG_LINE_BY_LINE       = 00100000b;
+const int TANGO_FLAG_INSTANTANEOUS      = 01000000b; // TODO - Text appears all at once
+const int TANGO_FLAG_PERSISTENT         = 10000000b; // TODO - String doesn't disappear
 
+// Backdrop types
 const int TANGO_BACKDROP_CLEAR            = 0;
 const int TANGO_BACKDROP_COLOR            = 1;
 const int TANGO_BACKDROP_COLOR_TRANS      = 2;
 const int TANGO_BACKDROP_IMAGE            = 3;
 const int TANGO_BACKDROP_IMAGE_TRANS      = 4;
 const int TANGO_BACKDROP_COMPLEX          = 5;
+
+
 
 void Tango_SetStyleAttribute(int style, int attribute, int value)
 {
@@ -70,3 +81,39 @@ int Tango_GetStringStyleAttribute(int stringID, int attribute)
     int style=__Tango_StringData[stringID*__TANGO_SIZEOF_DATA+__TANGO_DATA_STYLE];
     return __Tango_Styles[style*__TANGO_SIZEOF_STYLE+attribute];
 }
+
+
+void Tango_ClearStyle(int styleID)
+{
+    int styleStart=styleID*__TANGO_SIZEOF_STYLE;
+    
+    __Tango_Styles[styleStart+TANGO_STYLE_BACKDROP_TYPE]=TANGO_BACKDROP_CLEAR;
+    __Tango_Styles[styleStart+TANGO_STYLE_BACKDROP_DATA]=0;
+    __Tango_Styles[styleStart+TANGO_STYLE_BACKDROP_CSET]=0;
+    __Tango_Styles[styleStart+TANGO_STYLE_BACKDROP_WIDTH]=0;
+    __Tango_Styles[styleStart+TANGO_STYLE_BACKDROP_HEIGHT]=0;
+    
+    __Tango_Styles[styleStart+TANGO_STYLE_TEXT_FONT]=0;
+    __Tango_Styles[styleStart+TANGO_STYLE_TEXT_X]=0;
+    __Tango_Styles[styleStart+TANGO_STYLE_TEXT_Y]=0;
+    __Tango_Styles[styleStart+TANGO_STYLE_TEXT_WIDTH]=0;
+    __Tango_Styles[styleStart+TANGO_STYLE_TEXT_HEIGHT]=0;
+    __Tango_Styles[styleStart+TANGO_STYLE_TEXT_CSET]=0;
+    __Tango_Styles[styleStart+TANGO_STYLE_TEXT_COLOR]=0;
+    __Tango_Styles[styleStart+TANGO_STYLE_TEXT_SPEED]=0;
+    __Tango_Styles[styleStart+TANGO_STYLE_TEXT_SFX]=18;
+    __Tango_Styles[styleStart+TANGO_STYLE_TEXT_END_SFX]=0;
+    
+    __Tango_Styles[styleStart+TANGO_STYLE_CURSOR_COMBO]=0;
+    __Tango_Styles[styleStart+TANGO_STYLE_CURSOR_CSET]=0;
+    __Tango_Styles[styleStart+TANGO_STYLE_CURSOR_WIDTH]=0;
+    __Tango_Styles[styleStart+TANGO_STYLE_CURSOR_MOVE_SFX]=0;
+    __Tango_Styles[styleStart+TANGO_STYLE_CURSOR_SELECT_SFX]=0;
+    
+    __Tango_Styles[styleStart+TANGO_STYLE_MORE_COMBO]=0;
+    __Tango_Styles[styleStart+TANGO_STYLE_MORE_CSET]=0;
+    __Tango_Styles[styleStart+TANGO_STYLE_MORE_X]=0;
+    __Tango_Styles[styleStart+TANGO_STYLE_MORE_Y]=0;
+    __Tango_Styles[styleStart+TANGO_STYLE_FLAGS]=0;
+}
+

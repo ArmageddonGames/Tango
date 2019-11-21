@@ -1,49 +1,165 @@
-// tango.zh alpha 1
-// Menu-related stuff
+// tango.zh alpha 2
+// Menu-related functions.
+
+
+// Resets all menu data.
+void Tango_InitializeMenu()
+{
+    __Tango_Data[__TANGO_IDX_MENU_CURSOR_POS]=-1;
+    __Tango_Data[__TANGO_IDX_MENU_CURSOR_COMBO]=0;
+    __Tango_Data[__TANGO_IDX_MENU_CURSOR_CSET]=0;
+    __Tango_Data[__TANGO_IDX_MENU_CURSOR_WIDTH]=1;
+    __Tango_Data[__TANGO_IDX_MENU_CURSOR_HEIGHT]=1;
+    __Tango_Data[__TANGO_IDX_MENU_CURSOR_SFX]=0;
+    __Tango_Data[__TANGO_IDX_MENU_SELECT_SFX]=0;
+    __Tango_Data[__TANGO_IDX_CHOICE_COUNT]=0;
+    __Tango_Data[__TANGO_IDX_LAST_CHOICE]=0;
+}
+
+
+// This version is used when reading a menu from a string. It loads the
+// cursor combo and sounds from the style instead of setting them to 0.
+void __Tango_InitializeMenu(int styleStart)
+{
+    __Tango_Data[__TANGO_IDX_MENU_CURSOR_POS]=-1;
+    __Tango_Data[__TANGO_IDX_MENU_CURSOR_WIDTH]=1;
+    __Tango_Data[__TANGO_IDX_MENU_CURSOR_HEIGHT]=1;
+    __Tango_Data[__TANGO_IDX_CHOICE_COUNT]=0;
+    __Tango_Data[__TANGO_IDX_LAST_CHOICE]=0;
+    
+    __Tango_Data[__TANGO_IDX_MENU_CURSOR_COMBO]=
+      __Tango_Styles[styleStart+TANGO_STYLE_CURSOR_COMBO];
+    __Tango_Data[__TANGO_IDX_MENU_CURSOR_CSET]=
+      __Tango_Styles[styleStart+TANGO_STYLE_CURSOR_CSET];
+    __Tango_Data[__TANGO_IDX_MENU_CURSOR_SFX]=
+      __Tango_Styles[styleStart+TANGO_STYLE_CURSOR_MOVE_SFX];
+    __Tango_Data[__TANGO_IDX_MENU_SELECT_SFX]=
+      __Tango_Styles[styleStart+TANGO_STYLE_CURSOR_SELECT_SFX];
+}
+
+void Tango_AddMenuChoice(int value, int x, int y)
+{
+    if(__Tango_Data[__TANGO_IDX_CHOICE_COUNT]>=__TANGO_MAX_MENU_ITEMS)
+        return;
+    
+    int dataStart=__TANGO_IDX_CHOICE_DATA+
+      __Tango_Data[__TANGO_IDX_CHOICE_COUNT]*__TANGO_SIZEOF_CHOICE;
+    __Tango_Data[dataStart+__TANGO_CHOICE_VALUE]=value;
+    __Tango_Data[dataStart+__TANGO_CHOICE_X]=x;
+    __Tango_Data[dataStart+__TANGO_CHOICE_Y]=y;
+    __Tango_Data[__TANGO_IDX_CHOICE_COUNT]++;
+}
+
+void Tango_SetMenuCursor(int combo, int cset)
+{
+    __Tango_Data[__TANGO_IDX_MENU_CURSOR_COMBO]=combo;
+    __Tango_Data[__TANGO_IDX_MENU_CURSOR_CSET]=cset;
+    __Tango_Data[__TANGO_IDX_MENU_CURSOR_WIDTH]=1;
+    __Tango_Data[__TANGO_IDX_MENU_CURSOR_HEIGHT]=1;
+}
+
+void Tango_SetMenuCursor(int combo, int cset, int width, int height)
+{
+    __Tango_Data[__TANGO_IDX_MENU_CURSOR_COMBO]=combo;
+    __Tango_Data[__TANGO_IDX_MENU_CURSOR_CSET]=cset;
+    __Tango_Data[__TANGO_IDX_MENU_CURSOR_WIDTH]=width;
+    __Tango_Data[__TANGO_IDX_MENU_CURSOR_HEIGHT]=height;
+}
+
+void Tango_SetMenuSFX(int moveSound, int selectSound)
+{
+    __Tango_Data[__TANGO_IDX_MENU_CURSOR_SFX]=moveSound;
+    __Tango_Data[__TANGO_IDX_MENU_SELECT_SFX]=selectSound;
+}
+
+void Tango_ActivateMenu()
+{
+    if(__Tango_Data[__TANGO_IDX_CHOICE_COUNT]<=0)
+        return;
+    
+    __Tango_Data[__TANGO_IDX_MENU_CURSOR_POS]=0;
+    Link->PressA=false; // Prevent the player from making a selection instantly
+}
+
+bool Tango_MenuIsActive()
+{
+    return __Tango_Data[__TANGO_IDX_MENU_CURSOR_POS]>=0;
+}
+
+int Tango_GetLastMenuChoice()
+{
+    return __Tango_Data[__TANGO_IDX_LAST_CHOICE];
+}
 
 void __Tango_SetUpMenu(int styleStart)
 {
-    __Tango_Data[__TANGO_IDX_LAST_CHOICE]=0;
-    __Tango_Data[__TANGO_IDX_MENU_CURSOR]=1;
-    __Tango_Data[__TANGO_IDX_MENU_STYLE]=styleStart;
+    Tango_InitializeMenu();
+    Tango_SetMenuCursor(
+      __Tango_Styles[styleStart+TANGO_STYLE_CURSOR_COMBO],
+      __Tango_Styles[styleStart+TANGO_STYLE_CURSOR_CSET]);
 }
 
 void __Tango_UpdateMenu()
 {
-    int pos=__Tango_Data[__TANGO_IDX_MENU_CURSOR]-1;
+    int pos=__Tango_Data[__TANGO_IDX_MENU_CURSOR_POS];
     int max=__Tango_Data[__TANGO_IDX_CHOICE_COUNT]-1;
+    bool playSound=false;
     
     if(Link->PressUp || Link->PressLeft)
+    {
         if(pos==0)
             pos=max;
         else
             pos--;
+        playSound=true;
+    }
     else if(Link->PressDown || Link->PressRight)
+    {
         if(pos==max)
             pos=0;
         else
             pos++;
+        playSound=true;
+    }
     
     if(Link->PressA)
     {
         int dataStart=__TANGO_IDX_CHOICE_DATA+pos*__TANGO_SIZEOF_CHOICE;
         __Tango_Data[__TANGO_IDX_LAST_CHOICE]=__Tango_Data[dataStart+__TANGO_CHOICE_VALUE];
-        __Tango_Data[__TANGO_IDX_MENU_CURSOR]=0;
+        __Tango_Data[__TANGO_IDX_MENU_CURSOR_POS]=-1;
+        Game->PlaySound(__Tango_Data[__TANGO_IDX_MENU_SELECT_SFX]);
     }
     else
-        __Tango_Data[__TANGO_IDX_MENU_CURSOR]=pos+1;
+    {
+        __Tango_Data[__TANGO_IDX_MENU_CURSOR_POS]=pos;
+        if(playSound)
+            Game->PlaySound(__Tango_Data[__TANGO_IDX_MENU_CURSOR_SFX]);
+    }
 }
 
 void __Tango_ReadChoice(int index, int which, int x, int y)
 {
     int offset=which*__TANGO_SIZEOF_CHOICE;
     __Tango_Data[__TANGO_IDX_CHOICE_DATA+offset+__TANGO_CHOICE_VALUE]=
-        __Tango_StringBuffer[index+1];
+      __Tango_StringBuffer[index+1];
     __Tango_Data[__TANGO_IDX_CHOICE_DATA+offset+__TANGO_CHOICE_X]=x;
     __Tango_Data[__TANGO_IDX_CHOICE_DATA+offset+__TANGO_CHOICE_Y]=y;
     __Tango_Data[__TANGO_IDX_CHOICE_COUNT]=which+1;
 }
 
+void __Tango_ReadChoice(int pos, int dataStart, int styleStart)
+{
+    int x=__Tango_StringData[dataStart+__TANGO_DATA_SCREEN_X]+
+      __Tango_Styles[styleStart+TANGO_STYLE_TEXT_X]+
+      __Tango_StringData[dataStart+__TANGO_DATA_CHAR_X];
+    int y=__Tango_StringData[dataStart+__TANGO_DATA_SCREEN_Y]+
+      __Tango_Styles[styleStart+TANGO_STYLE_TEXT_Y]+
+      __Tango_StringData[dataStart+__TANGO_DATA_CHAR_Y];
+    int value=__Tango_StringBuffer[pos+1];
+    Tango_AddMenuChoice(value, x, y);
+}
+
+// Used when the text scrolls while a menu is printing
 void __Tango_ShiftMenu(int amount)
 {
     int index=__TANGO_IDX_CHOICE_DATA+__TANGO_CHOICE_Y;

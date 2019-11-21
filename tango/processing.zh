@@ -1,0 +1,572 @@
+// tango.zh alpha 2
+// Constants and functions related to processing strings.
+
+// String states
+const int __TANGO_STATE_INACTIVE = 0;
+const int __TANGO_STATE_ACTIVE = 1;
+const int __TANGO_STATE_FINISHED = 2;
+const int __TANGO_STATE_ADVANCING = 3;
+const int __TANGO_STATE_RESERVED = 4;
+
+// Update speeds
+const int __TANGO_SPEED_NORMAL  = 0;
+const int __TANGO_SPEED_FAST    = 1;
+const int __TANGO_SPEED_INSTANT = 2;
+
+
+
+bool __Tango_CheckScreenChange()
+{
+    int screen=(Game->GetCurDMap()<<8)+Game->GetCurDMapScreen();
+    
+    if(__Tango_Data[__TANGO_IDX_PREV_SCREEN]!=screen)
+    {
+        __Tango_Data[__TANGO_IDX_PREV_SCREEN]=screen;
+        return true;
+    }
+    else
+        return false;
+}
+
+
+// Updates each string.
+void Tango_Update1()
+{
+    Screen->SetRenderTarget(__TANGO_BITMAP);    
+    
+    int state;
+    int flags;
+    int speed;
+    int dataStart;
+    int styleStart;
+    int defStart;
+    int choice;
+    bool blockA=false;
+    bool blockB=false;
+    bool blockAll=false;
+    
+    bool changedScreen=__Tango_CheckScreenChange();
+    
+    for(int i=0; i<__TANGO_NUM_STRINGS; i++)
+    {
+        dataStart=i*__TANGO_SIZEOF_DATA;
+        state=__Tango_StringData[dataStart+__TANGO_DATA_STATE];
+        
+        if(state==__TANGO_STATE_INACTIVE)
+            continue;
+        
+        __Tango_SetCurrentString(i);
+        
+        styleStart=__Tango_StringData[dataStart+__TANGO_DATA_STYLE]*__TANGO_SIZEOF_STYLE;
+        defStart=i*__TANGO_SIZEOF_STRDEF;
+        flags=__Tango_Styles[styleStart+TANGO_STYLE_FLAGS];
+        
+        if(changedScreen)
+        {
+            // Reserved status is cleared on screen changes regardless
+            // of the carry over flag.
+            if(state==__TANGO_STATE_RESERVED ||
+               (flags&TANGO_FLAG_CARRY_OVER)==0)
+            {
+                Tango_ClearString(i);
+                continue;
+            }
+        }
+        
+        if(state==__TANGO_STATE_RESERVED)
+            continue;
+        
+        speed=__TANGO_SPEED_NORMAL;
+        
+        if((flags&TANGO_FLAG_ENABLE_SPEEDUP)!=0)
+        {
+            blockA=true;
+            if(Link->InputA)
+                speed=__TANGO_SPEED_FAST;
+        }
+        
+        if((flags&TANGO_FLAG_ENABLE_SUPER_SPEED)!=0 && Link->InputB)
+        {
+            blockB=true;
+            if(Link->InputB)
+                speed=__TANGO_SPEED_INSTANT;
+        }
+        
+        if((flags&TANGO_FLAG_INSTANTANEOUS)!=0)
+            speed=__TANGO_SPEED_INSTANT;
+        
+        if((flags&TANGO_FLAG_BLOCK_INPUT)!=0)
+            blockAll=true;
+        
+        if(state==__TANGO_STATE_ACTIVE)
+        {
+            // Scroll and count down the delay if needed.
+            // Both are done at once.
+            if(__Tango_StringData[dataStart+__TANGO_DATA_COUNTER]>0)
+                __Tango_CountDown(speed);
+            if(__Tango_StringData[dataStart+__TANGO_DATA_SCROLLING]>0)
+                __Tango_Scroll(speed);
+            if(__Tango_StringData[dataStart+__TANGO_DATA_COUNTER]==0 &&
+               __Tango_StringData[dataStart+__TANGO_DATA_SCROLLING]==0)
+                __Tango_Process(i, dataStart, styleStart, speed);
+        }
+        else if(state==__TANGO_STATE_FINISHED)
+        {
+            bool done=false;
+            
+            if((flags&TANGO_FLAG_AUTO_ADVANCE)!=0)
+            {
+                if(__Tango_StringData[dataStart+__TANGO_DATA_COUNTER]>0)
+                    __Tango_CountDown(speed);
+                else
+                    done=true;
+            }
+            else if(Link->PressA)
+                done=true;
+            
+            // String is finished; either clear it out or get ready for
+            // the next one
+            if(done)
+            {
+                if(__Tango_StringData[dataStart+__TANGO_DATA_NEXT_STRING]==0)
+                    Tango_ClearString(i);
+                else
+                {
+                    __Tango_StringData[dataStart+__TANGO_DATA_STATE]=
+                        __TANGO_STATE_ADVANCING;
+                    __Tango_StringData[dataStart+__TANGO_DATA_SCROLLING]=
+                        __Tango_Styles[styleStart+TANGO_STYLE_TEXT_HEIGHT];
+                    __Tango_StringData[dataStart+__TANGO_DATA_COUNTER];
+                }
+            }
+        }
+        
+        // Advancing to the next string
+        else if(state==__TANGO_STATE_ADVANCING)
+        {
+            bool done=false;
+            
+            if(__TANGO_SCROLL_TO_NEXT!=0)
+                done=__Tango_Scroll(speed);
+            else
+                done=true;
+            
+            if(done)
+            {
+                Tango_SetMessage(i,
+                    __Tango_StringData[dataStart+__TANGO_DATA_NEXT_STRING]);
+                __Tango_StringData[dataStart+__TANGO_DATA_NEXT_STRING]=0;
+                __Tango_StringData[dataStart+__TANGO_DATA_POSITION]=
+                    __Tango_GetCurrStrDefData(__TANGO_STRDEF_START);
+                __Tango_StringData[dataStart+__TANGO_DATA_CHAR_X]=
+                    __TANGO_STRING_DEFS[defStart+__TANGO_STRDEF_X];
+                __Tango_StringData[dataStart+__TANGO_DATA_CHAR_Y]=
+                    __TANGO_STRING_DEFS[defStart+__TANGO_STRDEF_Y];
+                __Tango_StringData[dataStart+__TANGO_DATA_OFFSET]=0;
+                __Tango_StringData[dataStart+__TANGO_DATA_SCROLLING]=0;
+                __Tango_ClearStringBitmap(i);
+                
+                __Tango_StringData[dataStart+__TANGO_DATA_STATE]=
+                    __TANGO_STATE_ACTIVE;
+            }
+        }
+    }
+    
+    if(Tango_MenuIsActive())
+    {
+        __Tango_UpdateMenu();
+        blockAll=true; // Menus always block input
+    }
+    
+    if(blockAll)
+        __Tango_BlockAllInput();
+    else
+    {
+        if(blockA)
+        {
+            Link->InputA=false;
+            Link->PressA=false;
+        }
+        if(blockB)
+        {
+            Link->InputB=false;
+            Link->PressB=false;
+        }
+    }
+    
+    Screen->SetRenderTarget(RT_SCREEN);
+}
+
+
+// Draws each active string to the screen.
+void Tango_Update2()
+{
+    Screen->SetRenderTarget(RT_SCREEN);
+    
+    int state;
+    int dataStart;
+    
+    for(int i=0; i<__TANGO_NUM_STRINGS; i++)
+    {
+        __Tango_SetCurrentString(i);
+        dataStart=i*__TANGO_SIZEOF_DATA;
+        state=__Tango_StringData[dataStart+__TANGO_DATA_STATE];
+        
+        if(state!=__TANGO_STATE_INACTIVE &&
+           state!=__TANGO_STATE_RESERVED)
+            __Tango_DrawToScreen();
+    }
+    
+    if(Tango_MenuIsActive())
+        __Tango_DrawMenuCursor();
+}
+
+
+// Processes characters in the string until it encounters a delay.
+void __Tango_Process(int stringID, int dataStart, int styleStart, int speed)
+{
+    bool done=false;
+    int position=Tango_GetStringData(stringID, __TANGO_DATA_POSITION);
+    int character=__Tango_StringBuffer[position];
+    int defStart=stringID*__TANGO_SIZEOF_STRDEF;
+    int font=__Tango_Styles[styleStart+TANGO_STYLE_TEXT_FONT];
+    int left;
+    int right;
+    bool newLine;
+    bool setDelay;
+    bool isMenu=false;
+    int choiceCounter=0;
+    int scrolling;
+    bool lineByLine=
+      (__Tango_Styles[styleStart+TANGO_STYLE_FLAGS]&TANGO_FLAG_LINE_BY_LINE)!=0;
+    
+    while(!done)
+    {
+        newLine=false;
+        setDelay=false;
+        
+        // Space or printable character
+        if(character>=TANGO_CHAR_SPACE)
+        {
+            __Tango_StringData[dataStart+__TANGO_DATA_CHAR_X]+=
+              __Tango_PutChar(character, font,
+                              __Tango_StringData[dataStart+__TANGO_DATA_CHAR_X],
+                              __Tango_StringData[dataStart+__TANGO_DATA_CHAR_Y],
+                              __Tango_GetCurrentCSet(),
+                              __Tango_GetCurrentColor());
+            if((character>TANGO_CHAR_SPACE || __TANGO_SFX_ON_SPACE!=0) &&
+               !isMenu && speed!=__TANGO_SPEED_INSTANT && !lineByLine)
+                Game->PlaySound(__Tango_GetCurrentSFX());
+            position++;
+        }
+        
+        else if(character==__TANGO_SETTER_MARKER)
+        {
+            __Tango_RunSetter(position, true);
+            position+=6; // Must be at least six characters long
+
+        }
+        
+        else if(character==__TANGO_FUNC_MARKER)
+        {
+            int ret=__Tango_RunFunction(position, true);
+            if(ret>0 && !isMenu)
+                done=true;
+            // No position increment - may have put text
+        }
+        
+        else if(character==__TANGO_FLOW_MARKER)
+        {
+            int ret=__Tango_RunFlowControl(position);
+            if(ret>0 && !isMenu)
+                done=true;
+            // No position increment - may need repeated
+        }
+        
+        else if(character==TANGO_CHAR_NEWLINE)
+        {
+            newLine=true;
+            position++;
+        }
+        
+        else if(character==__TANGO_CHAR_CHOICE)
+        {
+            if(!isMenu)
+            {
+                __Tango_InitializeMenu(styleStart);
+                isMenu=true;
+            }
+            
+            __Tango_ReadChoice(position, dataStart, styleStart);
+            __Tango_StringData[dataStart+__TANGO_DATA_CHAR_X]+=
+                __Tango_Styles[styleStart+TANGO_STYLE_CURSOR_WIDTH];
+            
+            choiceCounter++;
+            position+=2;
+        }
+        
+        else if(character==__TANGO_CHAR_CHOICE_END)
+        {
+            Tango_ActivateMenu();
+            isMenu=false;
+            choiceCounter=0;
+            position+=2;
+        }
+        
+        else if(character==NULL)
+        {
+            __Tango_StringData[dataStart+__TANGO_DATA_STATE]=__TANGO_STATE_FINISHED;
+            Game->PlaySound(__Tango_Styles[styleStart+TANGO_STYLE_TEXT_END_SFX]);
+            if((__Tango_Styles[styleStart+TANGO_STYLE_FLAGS]&TANGO_FLAG_AUTO_ADVANCE)!=0 &&
+               speed!=__TANGO_SPEED_INSTANT)
+                __Tango_StringData[dataStart+__TANGO_DATA_COUNTER]=__TANGO_AUTO_ADVANCE_TIME;
+            
+            // Don't even bother setting done, just break out.
+            break;
+        }
+        
+        else
+        {
+            // Either filler or something that isn't valid here.
+            if(character!=__TANGO_CHAR_FILLER)
+                __Tango_LogError(__TANGO_ERROR_BAD_CHARACTER, character);
+            position++;
+        }
+        
+        // Load up the next character. If it's a text character,
+        // there should normally be a delay before processing it.
+        // It might also need to go on a new line.
+        
+        character=__Tango_StringBuffer[position];
+        
+        if(character>=TANGO_CHAR_SPACE)
+        {
+            // TODO check for space delay setting
+            if(speed!=__TANGO_SPEED_INSTANT && !isMenu && !lineByLine)
+                setDelay=true;
+        } // End next character check
+        
+        // See if the next character or word is too big to fit
+        // on the current line.
+        if(!newLine)
+            newLine=__Tango_NeedsNewLine(stringID, position);
+        
+        if(newLine)
+        {
+            scrolling=__Tango_StartNewLine();
+            if(scrolling>0)
+            {
+                if(isMenu || speed==__TANGO_SPEED_INSTANT)
+                {
+                    __Tango_StringData[dataStart+__TANGO_DATA_OFFSET]+=scrolling;
+                    if(isMenu)
+                        __Tango_ShiftMenu(scrolling);
+                }
+                else
+                {
+                    __Tango_StringData[dataStart+__TANGO_DATA_SCROLLING]=scrolling;
+                    done=true;
+                }
+            }
+            
+            if(lineByLine)
+                setDelay=true;
+        }
+        
+        if(setDelay)
+        {
+            // Add to the delay instead of setting it so this doesn't
+            // interfere with @delay
+            __Tango_StringData[dataStart+__TANGO_DATA_COUNTER]+=
+                __Tango_GetCurrentSpeed();
+            done=true;
+        }
+    }
+    
+    // Only play the sound once per line.
+    if(lineByLine)
+        Game->PlaySound(__Tango_GetCurrentSFX());
+    
+    __Tango_StringData[dataStart+__TANGO_DATA_POSITION]=position;
+}
+
+// Determines whether the next character or word will fit on the
+// current line. Newline characters are not handled here.
+bool __Tango_NeedsNewLine(int stringID, int pos)
+{
+    int character=__Tango_StringBuffer[pos];
+    
+    int dataStart=__Tango_Data[__TANGO_IDX_CURRSTR_DATA_START];
+    int defStart=__Tango_Data[__TANGO_IDX_CURRSTR_DEF_START];
+    int styleStart=__Tango_Data[__TANGO_IDX_CURRSTR_STYLE_START];
+    int font=__Tango_Data[__TANGO_IDX_CURRSTR_FONT];
+    
+    int left=__Tango_StringData[dataStart+__TANGO_DATA_CHAR_X];
+    int right=__TANGO_STRING_DEFS[defStart+__TANGO_STRDEF_X]+
+      __Tango_Styles[styleStart+TANGO_STYLE_TEXT_WIDTH];
+    
+    // Choices fit on the current line if the following word fits.
+    if(character==__TANGO_CHAR_CHOICE)
+    {
+        character=__Tango_StringBuffer[pos+1];
+        left+=__Tango_Styles[styleStart+TANGO_STYLE_CURSOR_WIDTH];
+        
+        // If this is a function, it may print text, so evaluate it
+        // and reread the character.
+        if(character==__TANGO_FUNC_MARKER)
+        {
+            __Tango_RunFunction(pos, true);
+            character=__Tango_StringBuffer[pos];
+        }
+        
+        // If the next character is the start of a word, see if it fits.
+        // Anything else, just assume it does.
+        if(character<=__TANGO_PRINTABLE_CHAR)
+            return !__Tango_WordWillFit(pos+2, font, left, right);
+        else
+            return true;
+    }
+    
+    // Unprintable characters, including spaces, are always considered
+    // to fit on the current line.
+    else if(character<=TANGO_CHAR_SPACE)
+        return false;
+    
+    // Must be a printable character. Does the character itself fit?
+    if(!__Tango_CharacterWillFit(character, font, left, right))
+        return true;
+    
+    // If so, see if it's the start of a word.
+    // Look for the previous text character or menu item marker.
+    bool wordStart=false;
+    int stringStart=__Tango_Data[__TANGO_IDX_CURRSTR_START];
+    for(int i=pos-1; i>stringStart; i--)
+    {
+        character=__Tango_StringBuffer[i];
+        
+        if(character==TANGO_CHAR_SPACE || character==__TANGO_CHAR_CHOICE)
+        {
+            wordStart=true;
+            break;
+        }
+        else if(character>=__TANGO_PRINTABLE_CHAR)
+        {
+            wordStart=false;
+            break;
+        }
+    }
+    
+    // if this is the start of a word, see if the word fits.
+    if(wordStart)
+        return !__Tango_WordWillFit(pos, font, left, right);
+    
+    // Otherwise, it must fit.
+    return false;
+}
+
+
+// Starts a new line. Returns the amount the text needs to scroll.
+int __Tango_StartNewLine()
+{
+    int dataStart=__Tango_Data[__TANGO_IDX_CURRSTR_DATA_START];
+    
+    __Tango_StringData[dataStart+__TANGO_DATA_CHAR_X]=__Tango_GetBitmapX();
+    __Tango_StringData[dataStart+__TANGO_DATA_CHAR_Y]+=__Tango_GetLineHeight();
+    
+    return __Tango_GetTargetOffset()-
+             __Tango_StringData[dataStart+__TANGO_DATA_OFFSET];
+}
+
+
+// Count down the state counter.
+void __Tango_CountDown(int speed)
+{
+    int dataStart=__Tango_Data[__TANGO_IDX_CURRSTR_DATA_START];
+    
+    int amount=1;
+    if(speed==__TANGO_SPEED_FAST)
+        amount*=__TANGO_SPEEDUP_FACTOR;
+    
+    __Tango_StringData[dataStart+__TANGO_DATA_COUNTER]=Max(0, 
+        __Tango_StringData[dataStart+__TANGO_DATA_COUNTER]-amount);
+}
+
+
+// Scroll down to display the next line or the next string.
+bool __Tango_Scroll(int speed)
+{
+    int dataStart=__Tango_Data[__TANGO_IDX_CURRSTR_DATA_START];
+    
+    if(speed==__TANGO_SPEED_INSTANT)
+    {
+        __Tango_StringData[dataStart+__TANGO_DATA_OFFSET]+=
+            __Tango_StringData[dataStart+__TANGO_DATA_SCROLLING];
+        __Tango_StringData[dataStart+__TANGO_DATA_SCROLLING]=0;
+        return true;
+    }
+    else
+    {
+        int amount=__TANGO_SCROLL_SPEED;
+        if(speed==__TANGO_SPEED_FAST)
+            amount*=__TANGO_SPEEDUP_FACTOR;
+        
+        if(__Tango_StringData[dataStart+__TANGO_DATA_SCROLLING]<=amount)
+        {
+            // Won't scroll all the way down this time.
+            __Tango_StringData[dataStart+__TANGO_DATA_OFFSET]+=
+                __Tango_StringData[dataStart+__TANGO_DATA_SCROLLING];
+            __Tango_StringData[dataStart+__TANGO_DATA_SCROLLING]=0;
+            return true;
+        }
+
+        else
+        {
+            // Scroll all the way.
+            __Tango_StringData[dataStart+__TANGO_DATA_OFFSET]+=amount;
+            __Tango_StringData[dataStart+__TANGO_DATA_SCROLLING]-=amount;
+            
+            // If scrolling to the next string, use the state counter
+            // to track the reduction in drawing size.
+            if(__Tango_StringData[dataStart+__TANGO_DATA_STATE]==__TANGO_STATE_ADVANCING)
+                __Tango_StringData[dataStart+__TANGO_DATA_COUNTER]+=amount;
+            return false;
+        }
+    }
+}
+
+
+void __Tango_BlockAllInput()
+{
+    Link->InputUp = false;
+    Link->PressUp = false;
+    Link->InputDown = false;
+    Link->PressDown = false;
+    Link->InputLeft = false;
+    Link->PressLeft = false;
+    Link->InputRight = false;
+    Link->PressRight = false;
+    
+    Link->InputA = false;
+    Link->PressA = false;
+    Link->InputB = false;
+    Link->PressB = false;
+    Link->InputL = false;
+    Link->PressL = false;
+    Link->InputR = false;
+    Link->PressR = false;
+    
+    Link->InputEx1 = false;
+    Link->PressEx1 = false;
+    Link->InputEx2 = false;
+    Link->PressEx2 = false;
+    Link->InputEx3 = false;
+    Link->PressEx3 = false;
+    Link->InputEx4 = false;
+    Link->PressEx4 = false;
+    
+    Link->InputStart = false;
+    Link->PressStart = false;
+    Link->InputMap = false;
+    Link->PressMap = false;
+}
+

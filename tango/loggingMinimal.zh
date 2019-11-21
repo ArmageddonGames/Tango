@@ -1,0 +1,16 @@
+// tango.zh alpha 2
+// Minimal message logging.
+
+
+void __Tango_LogMessage(int msg, float data)
+{
+    // Ignore it
+}
+
+void __Tango_LogError(int error, int data)
+{
+    int str[]="tango.zh error ";
+    TraceS(str);
+    TraceToBase(error, 10, 0);
+}
+

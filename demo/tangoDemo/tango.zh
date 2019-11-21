@@ -1,4 +1,4 @@
-// tango.zh alpha 1
+// tango.zh alpha 2
 
 // How fast messages scroll
 const int __TANGO_SCROLL_SPEED = 4;
@@ -26,13 +26,18 @@ const int __TANGO_CODE_DELIMITER = 64;
 // rather than just disappearing
 const int __TANGO_SCROLL_TO_NEXT = 1;
 
+// The maximum length of a string handled by @string.
+// Increasing this will make the function take more space in the buffer.
+// It's not necessary to account for the null terminator.
+const int __TANGO_MAX_STRING_FUNC_LENGTH = 16;
+
 // Custom functions
 const int __TANGO_NUM_CUSTOM_FUNCTIONS = 1;
 
 const int FUNC_PORTRAIT = 1529.8275;
 
 int __TANGO_CUSTOM_FUNCTIONS[] = {
-    FUNC_PORTRAIT, 1    // ID, number of arguments
+    FUNC_PORTRAIT
 };
 
 float __Tango_RunCustomFunction(float function, float args)
@@ -47,14 +52,17 @@ float __Tango_RunCustomFunction(float function, float args)
     return 0;
 }
 
+const int __TANGO_MAX_MENU_ITEMS = 4;
+float __Tango_Data[29]; // 17+3*__TANGO_MAX_MENU_ITEM
+
 // Available styles
 const int __TANGO_NUM_STYLES = 6;
-int __Tango_Styles[138]; // __TANGO_SIZEOF_STYLE * __TANGO_NUM_STYLES
-                         // __TANGO_SIZEOF_STYLE is currently 23
+int __Tango_Styles[150]; // __TANGO_SIZEOF_STYLE * __TANGO_NUM_STYLES
+                         // __TANGO_SIZEOF_STYLE is currently 25
 
 // Available strings
 const int __TANGO_NUM_STRINGS = 4;
-int __Tango_StringBuffer[1280]; // Arbitrary size
+int __Tango_StringBuffer[1216]; // Arbitrary size
 int __Tango_StringData[68]; // __TANGO_SIZEOF_DATA * __TANGO_NUM_STRINGS
                             // __TANGO_SIZEOF_DATA is currently 17
 
@@ -67,37 +75,48 @@ int __TANGO_STRING_DEFS[] = {
     // 0
     TANGO_STRING_NAVI,
     0,       // Starting index in __Tango_StringBuffer
+    64,      // Maximum length after processing
     256, 0,  // X, Y on offscreen bitmap
     128, 64, // Width, height on offscreen bitmap
     
     // 1
     TANGO_STRING_POPUP,
+    64,
     128,
     256, 64,
     128, 64,
     
     // 2
     TANGO_STRING_NORMAL,
-    256,
+    195,
+    512,
     0, 0,
     256, 256,
     
     // 3
     TANGO_STRING_NORMAL,
-    768,
+    704,
+    512,
     0, 256,
     256, 512
 };
 
+// Import loggingFull.zh instead of loggingMinimal.zh for more useful
+// error messages. This will bloat scripts, so it should only be used
+// for debugging.
+import "tango/loggingMinimal.zh"
+//import "tango/loggingFull.zh"
 
 import "tango/common.zh"
 import "tango/drawing.zh"
+import "tango/font.zh"
 import "tango/functions.zh"
 import "tango/loading.zh"
 import "tango/menu.zh"
+import "tango/messages.zh"
 import "tango/metrics.zh"
+import "tango/processing.zh"
 import "tango/style.zh"
-import "tango/update.zh"
 import "tango/user.zh"
 
 import "tango/script.z"

@@ -79,6 +79,8 @@ void SetUpPlainStyle()
     Tango_SetStyleAttribute(STYLE_PLAIN, TANGO_STYLE_CURSOR_COMBO, 707);
     Tango_SetStyleAttribute(STYLE_PLAIN, TANGO_STYLE_CURSOR_CSET, 0);
     Tango_SetStyleAttribute(STYLE_PLAIN, TANGO_STYLE_CURSOR_WIDTH, 10);
+    Tango_SetStyleAttribute(STYLE_PLAIN, TANGO_STYLE_CURSOR_MOVE_SFX, 66);
+    Tango_SetStyleAttribute(STYLE_PLAIN, TANGO_STYLE_CURSOR_SELECT_SFX, 67);
     
     Tango_SetStyleAttribute(STYLE_PLAIN, TANGO_STYLE_MORE_COMBO, 710);
     Tango_SetStyleAttribute(STYLE_PLAIN, TANGO_STYLE_MORE_CSET, 10);
@@ -128,10 +130,6 @@ void SetUpJapaneseStyle()
     Tango_SetStyleAttribute(STYLE_JAPANESE, TANGO_STYLE_FLAGS,
         TANGO_FLAG_ENABLE_SPEEDUP | TANGO_FLAG_ENABLE_SUPER_SPEED);
     
-    Tango_SetStyleAttribute(STYLE_JAPANESE, TANGO_STYLE_CURSOR_COMBO, 707);
-    Tango_SetStyleAttribute(STYLE_JAPANESE, TANGO_STYLE_CURSOR_CSET, 0);
-    Tango_SetStyleAttribute(STYLE_JAPANESE, TANGO_STYLE_CURSOR_WIDTH, 10);
-    
     Tango_SetStyleAttribute(STYLE_JAPANESE, TANGO_STYLE_MORE_COMBO, 710);
     Tango_SetStyleAttribute(STYLE_JAPANESE, TANGO_STYLE_MORE_CSET, 10);
     Tango_SetStyleAttribute(STYLE_JAPANESE, TANGO_STYLE_MORE_X, 128);
@@ -157,7 +155,9 @@ void SetUpPopupStyle()
     Tango_SetStyleAttribute(STYLE_POPUP, TANGO_STYLE_TEXT_SFX, 0);
     
     Tango_SetStyleAttribute(STYLE_POPUP, TANGO_STYLE_FLAGS,
-        TANGO_FLAG_AUTO_ADVANCE | TANGO_FLAG_CARRY_OVER);
+        TANGO_FLAG_INSTANTANEOUS |
+        TANGO_FLAG_AUTO_ADVANCE |
+        TANGO_FLAG_CARRY_OVER);
 }
 
 void SetUpZeldaStyle()
@@ -172,14 +172,12 @@ void SetUpZeldaStyle()
     Tango_SetStyleAttribute(STYLE_ZELDA, TANGO_STYLE_TEXT_HEIGHT, 68);
     Tango_SetStyleAttribute(STYLE_ZELDA, TANGO_STYLE_TEXT_CSET, 0);
     Tango_SetStyleAttribute(STYLE_ZELDA, TANGO_STYLE_TEXT_COLOR, 1);
-    Tango_SetStyleAttribute(STYLE_ZELDA, TANGO_STYLE_TEXT_SPEED, 2);
+    Tango_SetStyleAttribute(STYLE_ZELDA, TANGO_STYLE_TEXT_SPEED, 8);
     Tango_SetStyleAttribute(STYLE_ZELDA, TANGO_STYLE_TEXT_SFX, 64);
     Tango_SetStyleAttribute(STYLE_ZELDA, TANGO_STYLE_TEXT_END_SFX, 65);
     
     Tango_SetStyleAttribute(STYLE_ZELDA, TANGO_STYLE_FLAGS,
-        TANGO_FLAG_ENABLE_SPEEDUP |
-        TANGO_FLAG_ENABLE_SUPER_SPEED |
-        TANGO_FLAG_BLOCK_INPUT);
+        TANGO_FLAG_LINE_BY_LINE | TANGO_FLAG_BLOCK_INPUT);
     
     Tango_SetStyleAttribute(STYLE_ZELDA, TANGO_STYLE_MORE_COMBO, 710);
     Tango_SetStyleAttribute(STYLE_ZELDA, TANGO_STYLE_MORE_CSET, 10);
@@ -199,14 +197,12 @@ void SetUpLinkStyle()
     Tango_SetStyleAttribute(STYLE_LINK, TANGO_STYLE_TEXT_HEIGHT, 68);
     Tango_SetStyleAttribute(STYLE_LINK, TANGO_STYLE_TEXT_CSET, 0);
     Tango_SetStyleAttribute(STYLE_LINK, TANGO_STYLE_TEXT_COLOR, 1);
-    Tango_SetStyleAttribute(STYLE_LINK, TANGO_STYLE_TEXT_SPEED, 2);
+    Tango_SetStyleAttribute(STYLE_LINK, TANGO_STYLE_TEXT_SPEED, 8);
     Tango_SetStyleAttribute(STYLE_LINK, TANGO_STYLE_TEXT_SFX, 64);
     Tango_SetStyleAttribute(STYLE_LINK, TANGO_STYLE_TEXT_END_SFX, 65);
     
     Tango_SetStyleAttribute(STYLE_LINK, TANGO_STYLE_FLAGS,
-        TANGO_FLAG_ENABLE_SPEEDUP |
-        TANGO_FLAG_ENABLE_SUPER_SPEED |
-        TANGO_FLAG_BLOCK_INPUT);
+        TANGO_FLAG_LINE_BY_LINE | TANGO_FLAG_BLOCK_INPUT);
     
     Tango_SetStyleAttribute(STYLE_LINK, TANGO_STYLE_MORE_COMBO, 710);
     Tango_SetStyleAttribute(STYLE_LINK, TANGO_STYLE_MORE_CSET, 10);
