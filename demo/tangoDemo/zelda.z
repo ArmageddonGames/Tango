@@ -4,38 +4,34 @@ ffc script Zelda
 {
     void run(int message1, int message2)
     {
-        bool talking=false;
-        int slot1;
-        int slot2;
-        
         while(true)
         {
-            if(!talking && !linkAlreadyTalking && LinkWantsToTalk(this))
+            if(StartTalking(this))
             {
                 // Get a string
-                slot1=Tango_GetFreeSlot(TANGO_SLOT_NORMAL);
+                int slot1=Tango_GetFreeSlot(TANGO_SLOT_NORMAL);
                 if(slot1==TANGO_INVALID)
+                {
+                    StopTalking();
                     continue;
+                }
                 
                 // Reserve it so the next call to Tango_GetFreeString()
                 // doesn't return the same one
                 Tango_ReserveSlot(slot1);
                 
                 // Get another one
-                slot2=Tango_GetFreeSlot(TANGO_SLOT_NORMAL);
+                int slot2=Tango_GetFreeSlot(TANGO_SLOT_NORMAL);
                 if(slot2==TANGO_INVALID)
+                {
+                    StopTalking();
                     continue;
+                }
                 
-                talking=true;
-                linkAlreadyTalking=true;
                 ShowMessages(slot1, slot2, message1, message2);
-            }
-            
-            if(talking)
-            {
-                talking=Tango_SlotIsActive(slot1);
-                if(!talking)
-                    linkAlreadyTalking=false;
+                while(Tango_SlotIsActive(slot1))
+                    Waitframe();
+                StopTalking();
             }
             
             Waitframe();

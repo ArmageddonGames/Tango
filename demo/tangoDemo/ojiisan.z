@@ -4,9 +4,7 @@ ffc script Ojiisan
 {
     void run()
     {
-        bool talking=false;
-        int slot;
-        
+        // "一人では危険じゃ。これを授けよう。@sync(1)"
         int jpn[]= { KNJ_ICHI, KNJ_JIN, HG_DE, HG_HA, KNJ_KI, KNJ_KEN, HG_JI, HG_SMALL_YA, KUTEN,
                      HG_KO, HG_RE, HG_WO, KNJ_JU, HG_KE, HG_YO, HG_U, KUTEN, NULL };
         int format[]="%s@sync(1)";
@@ -15,27 +13,23 @@ ffc script Ojiisan
         
         while(true)
         {
-            if(!talking && !linkAlreadyTalking && LinkWantsToTalk(this))
+            if(StartTalking(this))
             {
-                slot=ShowString(string, TANGO_SLOT_NORMAL, STYLE_JAPANESE, 32, 32);
-                if(slot==TANGO_INVALID)
-                    talking=false;
-                else
+                int slot=ShowString(string, TANGO_SLOT_NORMAL, STYLE_JAPANESE, 32, 32);
+                if(slot!=TANGO_INVALID)
                 {
-                    talking=true;
-                    linkAlreadyTalking=true;
-                    Tango_Sync(1); // Wait until @sync(1) is reached before continuing
+                    // Wait until @sync(1) is reached before continuing
+                    Tango_Sync(1);
+                    
                     item sword=Screen->CreateItem(5);
                     sword->X=Link->X;
                     sword->Y=Link->Y;
+                    
+                    while(Tango_SlotIsActive(slot))
+                        Waitframe();
                 }
-            }
-            
-            if(talking)
-            {
-                talking=Tango_SlotIsActive(slot);
-                if(!talking)
-                    linkAlreadyTalking=false;
+                
+                StopTalking();
             }
             
             Waitframe();

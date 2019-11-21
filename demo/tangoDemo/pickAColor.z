@@ -6,8 +6,11 @@ ffc script PickAColor
     {
         while(true)
         {
-            if(!linkAlreadyTalking && LinkWantsToTalk(this))
+            if(StartTalking(this))
+            {
                 GetColorChoice(message);
+                StopTalking();
+            }
             
             Waitframe();
         }
@@ -33,6 +36,7 @@ ffc script PickAColor
         // The string will call @sync(1) when the menu should start
         Tango_Sync(1);
         
+        // Set up the menu
         Tango_InitializeMenu();
         Tango_SetMenuCursor(706, 0, 2, 2);
         Tango_SetMenuSFX(66, 67, 0);
@@ -44,14 +48,17 @@ ffc script PickAColor
         // Show a second string with whatever the cursor is currently on
         while(Tango_MenuIsActive())
         {
+            // In this menu, the value of each choice is one greater than
+            // the corresponding array position
             currentChoice=Tango_GetCurrentMenuChoice()-1;
             if(currentChoice!=lastChoice)
             {
+                // The cursor has moved or the menu was just activated;
+                // load up the new string
                 if(choiceSlot!=TANGO_INVALID)
                     Tango_ClearSlot(choiceSlot);
                 choiceSlot=ShowString(choiceStrings[currentChoice],
-                                      TANGO_SLOT_NORMAL, STYLE_CURRENT_COLOR,
-                                      72, 104);
+                  TANGO_SLOT_NORMAL, STYLE_CURRENT_COLOR, 72, 104);
                 lastChoice=currentChoice;
             }
             Waitframe();
@@ -62,7 +69,7 @@ ffc script PickAColor
         
         // Load the value to pass to @string
         Tango_SetSlotVar(talkSlot, TANGO_VAR_A0,
-                          choiceStrings[Tango_GetLastMenuChoice()-1]);
+          choiceStrings[Tango_GetLastMenuChoice()-1]);
         
         while(Tango_SlotIsActive(talkSlot))
             Waitframe();

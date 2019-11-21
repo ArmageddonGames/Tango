@@ -9,8 +9,6 @@ ffc script Navi
 {
     void run()
     {
-        int slot;
-        
         this->Misc[NAVI_MISC_CENTER_X]=this->X;
         this->Misc[NAVI_MISC_CENTER_Y]=this->Y;
         
@@ -23,7 +21,7 @@ ffc script Navi
                 Waitframe();
             }
             
-            slot=ShowMessage(NAVI_MESSAGE, TANGO_SLOT_NAVI, STYLE_NAVI, this->X-80, this->Y-64);
+            int slot=ShowMessage(NAVI_MESSAGE, TANGO_SLOT_NAVI, STYLE_NAVI, this->X-80, this->Y-64);
             
             // Keep the message in place
             while(Tango_SlotIsActive(slot))

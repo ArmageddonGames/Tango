@@ -4,28 +4,22 @@ ffc script NPC
 {
     void run(int message)
     {
-        bool talking=false;
-        int slot;
-        
         while(true)
         {
-            if(!talking && !linkAlreadyTalking && LinkWantsToTalk(this))
+            if(StartTalking(this))
             {
-                slot=ShowMessage(message, TANGO_SLOT_NORMAL, STYLE_PLAIN, 32, 32);
-                if(slot==TANGO_INVALID)
-                    talking=false;
-                else
+                // Display the assigned message
+                int slot=ShowMessage(message, TANGO_SLOT_NORMAL, STYLE_PLAIN, 32, 32);
+                
+                // If the message was displayed successfully...
+                if(slot!=TANGO_INVALID)
                 {
-                    talking=true;
-                    linkAlreadyTalking=true;
+                    // Wait for it to be closed
+                    while(Tango_SlotIsActive(slot))
+                        Waitframe();
                 }
-            }
-            
-            if(talking)
-            {
-                talking=Tango_SlotIsActive(slot);
-                if(!talking)
-                    linkAlreadyTalking=false;
+                
+                StopTalking();
             }
             
             Waitframe();
