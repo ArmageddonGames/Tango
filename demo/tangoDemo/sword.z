@@ -5,9 +5,9 @@ item script SwordPickup
     void run()
     {
         // Item obtained
-        // +Wood
+        // (sword icon)Wood
         // Followed by commands to move up, wait, and move back down
-        int string[]="Item obtained@char(25)@char(127)Wood@while(@greater(@y 130) @increment(@y -3))@delay(120)@while(@less(@y 168) @increment(@y 3))";
+        int string[]="Item obtained@char(26)@char(127)Wood@while(@greater(@y 130) @increment(@y -3))@delay(120)@while(@less(@y 168) @increment(@y 3))";
         ShowString(string, TANGO_STRING_POPUP, STYLE_POPUP, 144, 168);
     }
 }

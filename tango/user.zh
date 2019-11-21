@@ -1,9 +1,8 @@
-// tango.zh alpha 2
+// tango.zh alpha 3
 // Functions for the user's use that don't really fit elsewhere.
 
 
 float Tango_D[8];
-
 
 
 void Tango_Start()
@@ -13,63 +12,71 @@ void Tango_Start()
         Tango_ClearString(i);
 }
 
-
 void Tango_ClearString(int stringID)
 {
+    if(!__Tango_ValidateString(stringID))
+        return;
+    
     int dataStart=stringID*__TANGO_SIZEOF_DATA;
     int defStart=stringID*__TANGO_SIZEOF_STRDEF;
     int pos=__TANGO_STRING_DEFS[defStart+__TANGO_STRDEF_START];
     
     __Tango_StringBuffer[pos]=NULL;
     
-    __Tango_StringData[dataStart+__TANGO_DATA_STYLE]=TANGO_INVALID;
-    __Tango_StringData[dataStart+__TANGO_DATA_STATE]=__TANGO_STATE_INACTIVE;
-    __Tango_StringData[dataStart+__TANGO_DATA_POSITION]=pos;
-    __Tango_StringData[dataStart+__TANGO_DATA_CHAR_X]=__TANGO_STRING_DEFS[defStart+__TANGO_STRDEF_X];
-    __Tango_StringData[dataStart+__TANGO_DATA_CHAR_Y]=__TANGO_STRING_DEFS[defStart+__TANGO_STRDEF_Y];
-    __Tango_StringData[dataStart+__TANGO_DATA_SCREEN_X]=0;
-    __Tango_StringData[dataStart+__TANGO_DATA_SCREEN_Y]=0;
-    __Tango_StringData[dataStart+__TANGO_DATA_CSET]=TANGO_DEFAULT;
-    __Tango_StringData[dataStart+__TANGO_DATA_COLOR]=TANGO_DEFAULT;
-    __Tango_StringData[dataStart+__TANGO_DATA_SPEED]=TANGO_DEFAULT;
-    __Tango_StringData[dataStart+__TANGO_DATA_SFX]=TANGO_DEFAULT;
-    __Tango_StringData[dataStart+__TANGO_DATA_OFFSET]=0;
-    __Tango_StringData[dataStart+__TANGO_DATA_SCROLLING]=0;
+    __Tango_StringData[dataStart+__TSDIDX_STYLE]=TANGO_INVALID;
+    __Tango_StringData[dataStart+__TSDIDX_STATE]=__TANGO_STATE_INACTIVE;
+    __Tango_StringData[dataStart+__TSDIDX_POSITION]=pos;
+    __Tango_StringData[dataStart+__TSDIDX_CHAR_X]=__TANGO_STRING_DEFS[defStart+__TANGO_STRDEF_X];
+    __Tango_StringData[dataStart+__TSDIDX_CHAR_Y]=__TANGO_STRING_DEFS[defStart+__TANGO_STRDEF_Y];
+    __Tango_StringData[dataStart+__TSDIDX_SCREEN_X]=0;
+    __Tango_StringData[dataStart+__TSDIDX_SCREEN_Y]=0;
+    __Tango_StringData[dataStart+__TSDIDX_CSET]=TANGO_DEFAULT;
+    __Tango_StringData[dataStart+__TSDIDX_COLOR]=TANGO_DEFAULT;
+    __Tango_StringData[dataStart+__TSDIDX_SPEED]=TANGO_DEFAULT;
+    __Tango_StringData[dataStart+__TSDIDX_SFX]=TANGO_DEFAULT;
+    __Tango_StringData[dataStart+__TSDIDX_OFFSET]=0;
+    __Tango_StringData[dataStart+__TSDIDX_SCROLLING]=0;
     __Tango_StringData[dataStart+TANGO_DATA_A0]=0;
     __Tango_StringData[dataStart+TANGO_DATA_A1]=0;
 }
 
-
 bool Tango_ReserveString(int stringID)
 {
+    if(!__Tango_ValidateString(stringID))
+        return false;
+    
     int dataStart=stringID*__TANGO_SIZEOF_DATA;
     
-    if(__Tango_StringData[dataStart+__TANGO_DATA_STATE]==__TANGO_STATE_INACTIVE)
+    if(__Tango_StringData[dataStart+__TSDIDX_STATE]==__TANGO_STATE_INACTIVE)
     {
-        __Tango_StringData[dataStart+__TANGO_DATA_STATE]=__TANGO_STATE_RESERVED;
+        __Tango_StringData[dataStart+__TSDIDX_STATE]=__TANGO_STATE_RESERVED;
         return true;
     }
     
     return false;
 }
 
-
 void Tango_SetStringPosition(int stringID, int x, int y)
 {
+    if(!__Tango_ValidateString(stringID))
+        return;
+    
     int dataStart=stringID*__TANGO_SIZEOF_DATA;
-    __Tango_StringData[dataStart+__TANGO_DATA_SCREEN_X]=x;
-    __Tango_StringData[dataStart+__TANGO_DATA_SCREEN_Y]=y;
+    __Tango_StringData[dataStart+__TSDIDX_SCREEN_X]=x;
+    __Tango_StringData[dataStart+__TSDIDX_SCREEN_Y]=y;
 }
-
 
 void Tango_ActivateString(int stringID)
 {
+    if(!__Tango_ValidateString(stringID))
+        return;
+    
     int dataStart=stringID*__TANGO_SIZEOF_DATA;
     
-    if(__Tango_StringData[dataStart+__TANGO_DATA_STATE]==__TANGO_STATE_INACTIVE ||
-       __Tango_StringData[dataStart+__TANGO_DATA_STATE]==__TANGO_STATE_RESERVED)
+    if(__Tango_StringData[dataStart+__TSDIDX_STATE]==__TANGO_STATE_INACTIVE ||
+       __Tango_StringData[dataStart+__TSDIDX_STATE]==__TANGO_STATE_RESERVED)
     {
-        __Tango_StringData[dataStart+__TANGO_DATA_STATE]=__TANGO_STATE_ACTIVE;
+        __Tango_StringData[dataStart+__TSDIDX_STATE]=__TANGO_STATE_ACTIVE;
         
         // Clear the text drawing area
         __Tango_ClearStringBitmap(stringID);
@@ -77,23 +84,24 @@ void Tango_ActivateString(int stringID)
     }
 }
 
-
 bool Tango_StringIsVisible(int stringID)
 {
+    if(!__Tango_ValidateString(stringID))
+        return false;
+    
     int dataStart=stringID*__TANGO_SIZEOF_DATA;
-    int state=__Tango_StringData[dataStart+__TANGO_DATA_STATE];
+    int state=__Tango_StringData[dataStart+__TSDIDX_STATE];
     if(state==__TANGO_STATE_INACTIVE ||
        state==__TANGO_STATE_RESERVED)
         return false;
     return true;
 }
 
-
 int Tango_GetFreeString(int type)
 {
     for(int i=0; i<__TANGO_NUM_STRINGS; i++)
     {
-        if(__Tango_StringData[i*__TANGO_SIZEOF_DATA+__TANGO_DATA_STATE]!=__TANGO_STATE_INACTIVE)
+        if(__Tango_StringData[i*__TANGO_SIZEOF_DATA+__TSDIDX_STATE]!=__TANGO_STATE_INACTIVE)
             continue;
         
         if(__TANGO_STRING_DEFS[i*__TANGO_SIZEOF_STRDEF+__TANGO_STRDEF_TYPE]==type ||
@@ -104,21 +112,30 @@ int Tango_GetFreeString(int type)
     return TANGO_INVALID;
 }
 
-
 int Tango_GetFreeString()
 {
     return Tango_GetFreeString(TANGO_STRING_ANY);
 }
 
-
 float Tango_GetStringData(int stringID, int what)
 {
-    return __Tango_StringData[stringID*__TANGO_SIZEOF_DATA+what];
+    if(__Tango_ValidateString(stringID))
+        return __Tango_StringData[stringID*__TANGO_SIZEOF_DATA+what];
+    return TANGO_INVALID;
 }
-
 
 void Tango_SetStringData(int stringID, int what, float value)
 {
-    __Tango_StringData[stringID*__TANGO_SIZEOF_DATA+what]=value;
+    if(__Tango_ValidateString(stringID))    
+        __Tango_StringData[stringID*__TANGO_SIZEOF_DATA+what]=value;
 }
 
+void Tango_Sync(int value)
+{
+    while(true)
+    {
+        if(__Tango_FindSyncingStrings(value))
+            return;
+        Waitframe();
+    }
+}

@@ -1,4 +1,4 @@
-// tango.zh alpha 2
+// tango.zh alpha 3
 
 // How fast messages scroll
 const int __TANGO_SCROLL_SPEED = 4;
@@ -32,7 +32,7 @@ const int __TANGO_SCROLL_TO_NEXT = 1;
 const int __TANGO_MAX_STRING_FUNC_LENGTH = 16;
 
 // Custom functions
-const int __TANGO_NUM_CUSTOM_FUNCTIONS = 1;
+const int __TANGO_NUM_CUSTOM_FUNCTIONS = 0;
 
 int __TANGO_CUSTOM_FUNCTIONS[] = {
 };
@@ -43,12 +43,12 @@ float __Tango_RunCustomFunction(float function, float args)
 }
 
 const int __TANGO_MAX_MENU_ITEMS = 4;
-float __Tango_Data[29]; // 17+3*__TANGO_MAX_MENU_ITEM
+float __Tango_Data[34]; // 22+3*__TANGO_MAX_MENU_ITEMS
 
 // Available styles
 const int __TANGO_NUM_STYLES = 4;
-int __Tango_Styles[100]; // __TANGO_SIZEOF_STYLE * __TANGO_NUM_STYLES
-                         // __TANGO_SIZEOF_STYLE is currently 25
+int __Tango_Styles[104]; // __TANGO_SIZEOF_STYLE * __TANGO_NUM_STYLES
+                         // __TANGO_SIZEOF_STYLE is currently 26
 
 // Available strings
 const int __TANGO_NUM_STRINGS = 2;
@@ -75,11 +75,88 @@ int __TANGO_STRING_DEFS[] = {
     256, 176
 };
 
+
+// Edit these functions to change which buttons are used.
+
+// Return Link->Press* for advance/end string button
+bool __Tango_PressAdvance()
+{
+    return Link->PressA;
+}
+
+// Return Link->Input* for advance/end string button
+bool __Tango_InputAdvance()
+{
+    return Link->InputA;
+}
+
+// Unset Link->Input* and Link->Press* for advance/end string button
+void __Tango_UnpressAdvance()
+{
+    Link->InputA=false;
+    Link->PressA=false;
+}
+
+// Return Link->Input* for speedup button
+bool __Tango_InputSpeedup()
+{
+    return Link->InputA;
+}
+
+// Unset Link->Input* and Link->Press* for speedup button
+void __Tango_UnpressSpeedup()
+{
+    Link->InputA=false;
+    Link->PressA=false;
+}
+
+// Return Link->Input* for super speed button
+bool __Tango_InputSuperSpeed()
+{
+    return Link->InputB;
+}
+
+// Unset Link->Input* and Link->Press* for super speed button
+void __Tango_UnpressSuperSpeed()
+{
+    Link->InputB=false;
+    Link->PressB=false;
+}
+
+// Return Link->Press* for menu select button
+bool __Tango_PressMenuSelect()
+{
+    return Link->PressA;
+}
+
+// Return Link->Press* for menu cancel button
+bool __Tango_PressMenuCancel()
+{
+    return Link->PressB;
+}
+
+// Return Link->Input* for both menu select and cancel buttons
+bool __Tango_InputMenu()
+{
+    return Link->InputA || Link->InputB;
+}
+
+// Unset Link->Input* and Link->Press* for menu select and cancel buttons
+void __Tango_UnpressMenu()
+{
+    Link->InputA=false;
+    Link->PressA=false;
+    Link->InputB=false;
+    Link->PressB=false;
+}
+
+
 // Import loggingFull.zh instead of loggingMinimal.zh for more useful
 // error messages. This will bloat scripts, so it should only be used
 // for debugging.
 import "tango/loggingMinimal.zh"
 //import "tango/loggingFull.zh"
+
 
 import "tango/common.zh"
 import "tango/drawing.zh"

@@ -1,4 +1,4 @@
-// tango.zh alpha 2
+// tango.zh alpha 3
 // Constants and functions relating to functions and variables.
 
 // Used in converting names to numbers
@@ -10,6 +10,8 @@ const float __TANGO_SETTER_INCREMENT = 6408.5111;
 
 // Flow control functions
 const float __TANGO_FLOW_IF        =     0.0069;
+const float __TANGO_FLOW_ELSE      =     0.2441;
+const float __TANGO_FLOW_ELSEIF    =    11.9678;
 const float __TANGO_FLOW_WHILE     =     5.8497;
 const float __TANGO_FLOW_WAITUNTIL = 13486.5225;
 
@@ -20,19 +22,24 @@ const float __TANGO_FUNC_AND       =    0.0151;
 const float __TANGO_FUNC_NOT       =    0.0811;
 const float __TANGO_FUNC_TAB       =    0.0989;
 const float __TANGO_FUNC_CHAR      =    0.1446;
+const float __TANGO_FUNC_GOTO      =    0.3291;
 const float __TANGO_FUNC_LESS      =    0.4513;
 const float __TANGO_FUNC_NEXT      =    0.5235;
 const float __TANGO_FUNC_RAND      =    0.6325;
+const float __TANGO_FUNC_SYNC      =    0.7843;
 const float __TANGO_FUNC_DELAY     =    1.1939;
+const float __TANGO_FUNC_CLOSE     =    1.2192;
 const float __TANGO_FUNC_EQUAL     =    1.8884;
 const float __TANGO_FUNC_APPEND    =    6.1058;
 const float __TANGO_FUNC_CHOICE    =    7.5241;
 const float __TANGO_FUNC_DOMENU    =   10.8066;
 const float __TANGO_FUNC_NUMBER    =   29.0329;
+const float __TANGO_FUNC_PRESSA    =   31.4910;
 const float __TANGO_FUNC_STRING    =   37.4073;
 const float __TANGO_FUNC_GREATER   =  113.9450;
 const float __TANGO_FUNC_ORDINAL   =  208.0657;
 const float __TANGO_FUNC_PLAYSFX   =  209.6041;
+const float __TANGO_FUNC_MENUWAIT  = 1158.8044;
 const float __TANGO_FUNC_NOTEQUAL  = 1364.9361;
 const float __TANGO_FUNC_SAVENAME  = 1615.1672;
 
@@ -53,6 +60,7 @@ const float __TANGO_VAR_CSET    =  0.2015;
 const float __TANGO_VAR_COLOR   =  1.3059;
 const float __TANGO_VAR_SPEED   =  5.1391;
 const float __TANGO_VAR_SFX     =  0.0997;
+const float __TANGO_VAR_STYLE   =  5.3793;
 const float __TANGO_VAR_NEXT    =  0.5235;
 const float __TANGO_VAR_CHOSEN  =  7.5754;
 const float __TANGO_VAR_DEFAULT = 57.0523;
@@ -67,7 +75,7 @@ const int __TANGO_FLOW_MARKER = -600;
 const int __TANGO_FLOW_END_MARKER = -700;
 
 
-// Runs @if, @while, and @waituntil.
+// Runs @if, @elseif, @else, @while, and @waituntil.
 int __Tango_RunFlowControl(int pos)
 {
     int type=__Tango_StringBuffer[pos+1];
@@ -75,17 +83,47 @@ int __Tango_RunFlowControl(int pos)
     int offset=2;
     bool clear=true;
     
-    int argLength=__Tango_ReadArgLength(pos+2);
-    int condition=__Tango_ReadArg(pos+2);
+    // Evaluate the condition first, unless this is @else
+    int argLength=0;
+    bool condition=false;
+    if(type!=__TANGO_FLOW_ELSE)
+    {
+        argLength=__Tango_ReadArgLength(pos+2);
+        condition=(__Tango_ReadArg(pos+2)!=0);
+    }
     
     if(type==__TANGO_FLOW_IF)
     {
         if(condition)
         {
+            __Tango_Data[__TDIDX_CONDITION_MET]=1;
             if(__Tango_StringBuffer[pos+2+argLength]==__TANGO_FUNC_MARKER)
                 ret=__Tango_RunFunction(pos+2+argLength, false);
             else
                 __Tango_RunSetter(pos+2+argLength, false);
+        }
+        else
+            __Tango_Data[__TDIDX_CONDITION_MET]=0;
+    }
+    else if(type==__TANGO_FLOW_ELSEIF)
+    {
+        if(condition && __Tango_Data[__TDIDX_CONDITION_MET]==0)
+        {
+            __Tango_Data[__TDIDX_CONDITION_MET]=1;
+            if(__Tango_StringBuffer[pos+2+argLength]==__TANGO_FUNC_MARKER)
+                ret=__Tango_RunFunction(pos+2+argLength, false);
+            else
+                __Tango_RunSetter(pos+2+argLength, false);
+        }
+    }
+    else if(type==__TANGO_FLOW_ELSE)
+    {
+        if(__Tango_Data[__TDIDX_CONDITION_MET]==0)
+        {
+            if(__Tango_StringBuffer[pos+2]==__TANGO_FUNC_MARKER)
+                ret=__Tango_RunFunction(pos+2, false);
+            else
+                __Tango_RunSetter(pos+2, false);
         }
     }
     else if(type==__TANGO_FLOW_WHILE)
@@ -109,9 +147,10 @@ int __Tango_RunFlowControl(int pos)
         }
     }
     
+    // Overwrite with filler
     if(clear)
     {
-        int end=pos+6; // The earliest the end can be
+        int end=pos+4; // The earliest the end can be
         while(__Tango_StringBuffer[end]!=__TANGO_FLOW_END_MARKER)
             end++;
         __Tango_AddFiller(pos, end);
@@ -149,8 +188,9 @@ int __Tango_RunFunction(int pos, bool clear)
     int function=__Tango_StringBuffer[pos+1];
     int totalLength=2;
     int argLength;
-    int args[2];
-    int ret;
+    int args[2]={0, 0};
+    int ret=0;
+    bool found;
     
     // Read arguments first.
     for(int i=0; true; i++)
@@ -172,73 +212,103 @@ int __Tango_RunFunction(int pos, bool clear)
     if(clear)
         __Tango_AddFiller(pos, pos+totalLength); // Add 1 for the end marker
     
-    // Text functions
-    if(function==__TANGO_FUNC_CHAR)
-        __Tango_StringBuffer[pos]=args[0];
-    else if(function==__TANGO_FUNC_NUMBER)
-        __Tango_FuncNumber(args[0], pos);
-    else if(function==__TANGO_FUNC_ORDINAL)
-        __Tango_FuncOrdinal(args[0], pos);
-    else if(function==__TANGO_FUNC_STRING)
-        __Tango_FuncString(args[0], pos);
-    else if(function==__TANGO_FUNC_SAVENAME)
-        __Tango_FuncSaveName(pos);
-    
-    // Numeric functions
-    else if(function==__TANGO_FUNC_ADD)
-        ret=args[0]+args[1];
-    else if(function==__TANGO_FUNC_RAND)
-        ret=Rand(args[0], args[1]);
-    
-    // Condition functions
-    else if(function==__TANGO_FUNC_EQUAL)
-        ret=__Tango_BoolToInt(args[0]==args[1]);
-    else if(function==__TANGO_FUNC_NOTEQUAL)
-        ret=__Tango_BoolToInt(args[0]!=args[1]);
-    else if(function==__TANGO_FUNC_GREATER)
-        ret=__Tango_BoolToInt(args[0]>args[1]);
-    else if(function==__TANGO_FUNC_LESS)
-        ret=__Tango_BoolToInt(args[0]<args[1]);
-    else if(function==__TANGO_FUNC_OR)
-        ret=__Tango_BoolToInt(args[0]!=0 || args[1]!=0);
-    else if(function==__TANGO_FUNC_AND)
-        ret=__Tango_BoolToInt(args[0]!=0 && args[1]!=0);
-    else if(function==__TANGO_FUNC_NOT)
-        ret=__Tango_BoolToInt(args[0]==0);
-    
-    // Other functions
-    else if(function==__TANGO_FUNC_CHOICE)
-        __Tango_FuncAddMenuItem(pos, args[0]);
-    else if(function==__TANGO_FUNC_DOMENU)
-        __Tango_FuncActivateMenu(pos);
-    else if(function==__TANGO_FUNC_PLAYSFX)
-        Game->PlaySound(args[0]);
-    else if(function==__TANGO_FUNC_APPEND)
-        __Tango_AppendMessage(pos+totalLength, args[0]);
-    else if(function==__TANGO_FUNC_TAB)
-        __Tango_FuncTab(args[0]);
-    else if(function==__TANGO_FUNC_NEXT)
-        __Tango_SetVar(__TANGO_VAR_NEXT, args[0]);
-    else if(function==__TANGO_FUNC_DELAY)
+    // Sorted by numeric value to reduce comparisons and if/else depth.
+    found=true;
+    if(function<5)
     {
-        __Tango_SetCurrStrData(__TANGO_DATA_COUNTER, args[0]);
-        ret=1;
+        if(function==__TANGO_FUNC_ADD)
+            ret=args[0]+args[1];
+        else if(function==__TANGO_FUNC_OR)
+            ret=__Tango_BoolToInt(args[0]!=0 || args[1]!=0);
+        else if(function==__TANGO_FUNC_AND)
+            ret=__Tango_BoolToInt(args[0]!=0 && args[1]!=0);
+        else if(function==__TANGO_FUNC_NOT)
+            ret=__Tango_BoolToInt(args[0]==0);
+        else if(function==__TANGO_FUNC_TAB)
+            __Tango_FuncTab(args[0]);
+        else if(function==__TANGO_FUNC_CHAR)
+            __Tango_StringBuffer[pos]=args[0];
+        else if(function==__TANGO_FUNC_GOTO)
+        {
+            __Tango_FuncGoto(pos, args[0]);
+            ret=1;
+        }
+        else if(function==__TANGO_FUNC_LESS)
+            ret=__Tango_BoolToInt(args[0]<args[1]);
+        else if(function==__TANGO_FUNC_NEXT)
+            __Tango_SetVar(__TANGO_VAR_NEXT, args[0]);
+        else if(function==__TANGO_FUNC_RAND)
+            ret=Rand(args[0], args[1]);
+        else if(function==__TANGO_FUNC_SYNC)
+            ret=__Tango_FuncSync(args);
+        else if(function==__TANGO_FUNC_DELAY)
+        {
+            __Tango_SetCurrStrData(__TSDIDX_COUNTER, args[0]);
+            ret=1;
+        }
+        else if(function==__TANGO_FUNC_CLOSE)
+        {
+            __Tango_SetCurrStrData(__TSDIDX_STATE, __TANGO_STATE_INACTIVE);
+            ret=1;
+        }
+        else if(function==__TANGO_FUNC_EQUAL)
+            ret=__Tango_BoolToInt(args[0]==args[1]);
+        else
+            found=false;
+    }
+    else // function>=5
+    {
+        if(function==__TANGO_FUNC_APPEND)
+            __Tango_AppendMessage(pos+totalLength, args[0]);
+        else if(function==__TANGO_FUNC_CHOICE)
+            __Tango_FuncAddMenuItem(pos, args[0]);
+        else if(function==__TANGO_FUNC_DOMENU)
+        {
+            __Tango_FuncActivateMenu(pos, args[0]);
+            ret=1;
+        }
+        else if(function==__TANGO_FUNC_NUMBER)
+            __Tango_FuncNumber(args[0], pos);
+        else if(function==__TANGO_FUNC_PRESSA)
+        {
+            __Tango_FuncPressA();
+            ret=1;
+        }
+        else if(function==__TANGO_FUNC_STRING)
+            __Tango_FuncString(args[0], pos);
+        else if(function==__TANGO_FUNC_GREATER)
+            ret=__Tango_BoolToInt(args[0]>args[1]);
+        else if(function==__TANGO_FUNC_ORDINAL)
+            __Tango_FuncOrdinal(args[0], pos);
+        else if(function==__TANGO_FUNC_PLAYSFX)
+            Game->PlaySound(args[0]);
+        else if(function==__TANGO_FUNC_MENUWAIT)
+        {
+            __Tango_SetCurrStrData(__TSDIDX_STATE, __TANGO_STATE_MENU_WAIT);
+            ret=1;
+        }
+        else if(function==__TANGO_FUNC_NOTEQUAL)
+            ret=__Tango_BoolToInt(args[0]!=args[1]);
+        else if(function==__TANGO_FUNC_SAVENAME)
+            __Tango_FuncSaveName(pos);
+        else
+            found=false;
     }
     
-    // Custom functions
-    else
+    // Not a built-in function; check custom functions.
+    if(!found)
     {
-        int i;
-        for(i=0; i<__TANGO_NUM_CUSTOM_FUNCTIONS; i++)
+        for(int i=0; i<__TANGO_NUM_CUSTOM_FUNCTIONS; i++)
         {
             if(function==__TANGO_CUSTOM_FUNCTIONS[i])
             {
                 ret=__Tango_RunCustomFunction(function, args);
+                found=true;
                 break;
             }
         }
         
-        if(i==__TANGO_NUM_CUSTOM_FUNCTIONS) // Didn't find it
+        if(!found)
             __Tango_LogError(__TANGO_ERROR_BAD_FUNCTION, function);
     }
     
@@ -280,7 +350,6 @@ int __Tango_ReadArgLength(int pos)
         return 0;
 }
 
-
 // Get the value of an argument, reading variables or
 // running functions if needed.
 int __Tango_ReadArg(int pos)
@@ -297,7 +366,6 @@ int __Tango_ReadArg(int pos)
         return __Tango_StringBuffer[pos+1];
 }
 
-
 // Convert true to 1 and false to 0, since ZScript doesn't allow casting
 // bool to int. This is just used to make the conditional functions less ugly.
 int __Tango_BoolToInt(bool value)
@@ -307,7 +375,6 @@ int __Tango_BoolToInt(bool value)
     else
         return 0;
 }
-
 
 // Implementation of @append
 void __Tango_AppendMessage(int index, int messageID)
@@ -322,7 +389,6 @@ void __Tango_AppendMessage(int index, int messageID)
     __Tango_LoadString(buffer, index);
 }
 
-
 // Implementation of @number
 void __Tango_FuncNumber(int number, int pos)
 {
@@ -335,7 +401,6 @@ void __Tango_FuncNumber(int number, int pos)
         pos++;
     }
 }
-
 
 // Implementation of @ordinal
 void __Tango_FuncOrdinal(int number, int pos)
@@ -377,7 +442,6 @@ void __Tango_FuncOrdinal(int number, int pos)
     }
 }
 
-
 // Helper for __Tango_FuncOrdinal. 
 int __Tango_GetOrdinal(int num)
 {
@@ -392,7 +456,6 @@ int __Tango_GetOrdinal(int num)
     return num%10;
 }
 
-
 // Implementation of @savename
 void __Tango_FuncSaveName(int pos)
 {
@@ -406,13 +469,9 @@ void __Tango_FuncSaveName(int pos)
     }
 }
 
-
 // Implementation of @string
 void __Tango_FuncString(int string, int pos)
 {
-Trace(999);
-Trace(string);
-TraceS(string);
     int length=Min(strlen(string), __TANGO_MAX_STRING_FUNC_LENGTH);
     
     for(int i=0; i<length; i++)
@@ -422,16 +481,14 @@ TraceS(string);
     }
 }
 
-
 // Implementation of @tab
 void __Tango_FuncTab(int value)
 {
-    int dataStart=__Tango_Data[__TANGO_IDX_CURRSTR_DATA_START];
-    int defStart=__Tango_Data[__TANGO_IDX_CURRSTR_DEF_START];
-    __Tango_StringData[dataStart+__TANGO_DATA_CHAR_X]=
+    int dataStart=__Tango_Data[__TCS_DATA_START];
+    int defStart=__Tango_Data[__TCS_DEF_START];
+    __Tango_StringData[dataStart+__TSDIDX_CHAR_X]=
       __TANGO_STRING_DEFS[defStart+__TANGO_STRDEF_X]+value;
 }
-
 
 // Implementation of @choice
 void __Tango_FuncAddMenuItem(int pos, int value)
@@ -440,18 +497,90 @@ void __Tango_FuncAddMenuItem(int pos, int value)
     __Tango_StringBuffer[pos+1]=value;
 }
 
-
 // Implementation of @domenu
-void __Tango_FuncActivateMenu(int pos)
+void __Tango_FuncActivateMenu(int pos, int canCancel)
 {
-    Tango_ActivateMenu();
+    Tango_ActivateMenu(canCancel!=0);
+    __Tango_SetCurrStrData(__TSDIDX_STATE, __TANGO_STATE_MENU_WAIT);
     
-    // Insert the character to switch __Tango_Process() back to
-    // normal behavior.
-    __Tango_StringBuffer[pos]=__TANGO_CHAR_CHOICE_END;
-    __Tango_StringBuffer[pos+1]=__TANGO_CHAR_FILLER;
+    // Insert the character to tell __Tango_Process() the menu's done.
+    __Tango_StringBuffer[pos]=__TANGO_CHAR_MENU_END;
 }
 
+// Implementation of @goto
+void __Tango_FuncGoto(int pos, int newString)
+{
+    __Tango_SetCurrStrData(__TSDIDX_NEXT_STRING, newString);
+    __Tango_BeginAdvancing();
+}
+
+// Implementation of @pressa
+int __Tango_FuncPressA()
+{
+    Game->PlaySound(__Tango_GetCurrStyleData(TANGO_STYLE_TEXT_END_SFX));
+    __Tango_SetCurrStrData(__TSDIDX_STATE, __TANGO_STATE_PRESS_A);
+}
+
+// Implementation of @sync
+int __Tango_FuncSync(int args)
+{
+    bool found;
+    int syncValue;
+    // @sync is unique in that it can take either one argument or two.
+    
+    // If there's only one argument, sync on this value if
+    // no other strings were waiting.
+    if(args[1]==0)
+    {
+        found=__Tango_FindSyncingStrings(args[0]);
+        syncValue=args[0];
+    }
+        
+    // If there are two arguments, don't stop even if no strings were
+    // waiting on the first argument. Sync on the second instead.
+    else
+    {
+        __Tango_FindSyncingStrings(args[0]);
+        found=__Tango_FindSyncingStrings(args[1]);
+        syncValue=args[1];
+    }
+    
+    if(found)
+        return 0;
+    else
+    {
+        __Tango_SetCurrStrData(__TSDIDX_STATE, __TANGO_STATE_SYNC_WAIT);
+        __Tango_SetCurrStrData(__TSDIDX_COUNTER, syncValue);
+        return 1;
+    }
+}
+
+// Helper for __Tango_FuncSync() and Tango_Sync(). Finds any strings
+// waiting for the given sync value and restarts them. Returns true
+// if any were found.
+bool __Tango_FindSyncingStrings(int value)
+{
+    int stateIdx;
+    int counterIdx;
+    bool found=false;
+    
+    for(int i=0; i<__TANGO_NUM_STRINGS; i++)
+    {
+        stateIdx=i*__TANGO_SIZEOF_DATA+__TSDIDX_STATE;
+        if(__Tango_StringData[stateIdx]==__TANGO_STATE_SYNC_WAIT)
+        {
+            counterIdx=i*__TANGO_SIZEOF_DATA+__TSDIDX_COUNTER;
+            if(__Tango_StringData[counterIdx]==value)
+            {
+                __Tango_StringData[stateIdx]=__TANGO_STATE_ACTIVE;
+                __Tango_StringData[counterIdx]=0;
+                found=true;
+            }
+        }
+    }
+    
+    return found;
+}
 
 // Get the current value of a variable. 
 float __Tango_GetVar(int var)
@@ -473,26 +602,27 @@ float __Tango_GetVar(int var)
         return __Tango_GetCurrentSpeed();
     else if(var==__TANGO_VAR_SFX)
         return __Tango_GetCurrentSFX();
+    else if(var==__TANGO_VAR_STYLE)
+        return __Tango_GetCurrStrData(__TSDIDX_STYLE);
     else if(var==__TANGO_VAR_X)
-        return __Tango_GetCurrStrData(__TANGO_DATA_SCREEN_X);
+        return __Tango_GetCurrStrData(__TSDIDX_SCREEN_X);
     else if(var==__TANGO_VAR_Y)
-        return __Tango_GetCurrStrData(__TANGO_DATA_SCREEN_Y);
+        return __Tango_GetCurrStrData(__TSDIDX_SCREEN_Y);
     else if(var==__TANGO_VAR_X)
-        return __Tango_GetCurrStrData(__TANGO_DATA_NEXT_STRING);
+        return __Tango_GetCurrStrData(__TSDIDX_NEXT_STRING);
     else if(var==__TANGO_VAR_DEFAULT)
         // TODO This isn't really correct, but is there a valid case where it might fail?
         return TANGO_DEFAULT;
     else if(var==__TANGO_VAR_CHOSEN)
-        return __Tango_Data[__TANGO_IDX_LAST_CHOICE];
+        return __Tango_Data[__TDIDX_LAST_CHOICE];
     
     return 0;
 }
 
-
 // Set a variable to the given value.
 void __Tango_SetVar(int var, float value)
 {
-    int dataStart=__Tango_Data[__TANGO_IDX_CURRSTR_DATA_START];
+    int dataStart=__Tango_Data[__TCS_DATA_START];
     
     if(var>=__TANGO_VAR_D0 && var<=__TANGO_VAR_D7)
     {
@@ -504,21 +634,26 @@ void __Tango_SetVar(int var, float value)
     else if(var==__TANGO_VAR_A1)
         __Tango_SetCurrStrData(TANGO_DATA_A1, value);
     else if(var==__TANGO_VAR_CSET)
-        __Tango_SetCurrStrData(__TANGO_DATA_CSET, value);
+        __Tango_SetCurrStrData(__TSDIDX_CSET, value);
     else if(var==__TANGO_VAR_COLOR)
-        __Tango_SetCurrStrData(__TANGO_DATA_COLOR, value);
+        __Tango_SetCurrStrData(__TSDIDX_COLOR, value);
     else if(var==__TANGO_VAR_SPEED)
-        __Tango_SetCurrStrData(__TANGO_DATA_SPEED, value);
+        __Tango_SetCurrStrData(__TSDIDX_SPEED, value);
     else if(var==__TANGO_VAR_SFX)
-        __Tango_SetCurrStrData(__TANGO_DATA_SFX, value);
+        __Tango_SetCurrStrData(__TSDIDX_SFX, value);
+    else if(var==__TANGO_VAR_STYLE)
+    {
+        __Tango_SetCurrStrData(__TSDIDX_STYLE, value);
+        __Tango_Data[__TCS_STYLE_START]=value*__TANGO_SIZEOF_STYLE;
+        __Tango_Data[__TDIDX_REFRESH_STYLE]=1;
+    }
     else if(var==__TANGO_VAR_X)
-        __Tango_SetCurrStrData(__TANGO_DATA_SCREEN_X, value);
+        __Tango_SetCurrStrData(__TSDIDX_SCREEN_X, value);
     else if(var==__TANGO_VAR_Y)
-        __Tango_SetCurrStrData(__TANGO_DATA_SCREEN_Y, value);
+        __Tango_SetCurrStrData(__TSDIDX_SCREEN_Y, value);
     else if(var==__TANGO_VAR_NEXT)
-        __Tango_SetCurrStrData(__TANGO_DATA_NEXT_STRING, value);
+        __Tango_SetCurrStrData(__TSDIDX_NEXT_STRING, value);
 }
-
 
 // Fills the string with filler characters from pos to end, inclusive.
 // Used to blank out functions so __Tango_Process() can proceed.
@@ -527,4 +662,3 @@ void __Tango_AddFiller(int pos, int end)
     for(; pos<=end; pos++)
         __Tango_StringBuffer[pos]=__TANGO_CHAR_FILLER;
 }
-

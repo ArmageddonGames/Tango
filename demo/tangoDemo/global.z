@@ -1,5 +1,3 @@
-// Just this...
-
 global script Init
 {
     void run()

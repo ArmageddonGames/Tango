@@ -1,4 +1,4 @@
-// tango.zh alpha 2
+// tango.zh alpha 3
 // Functions relating to glyph and word sizes.
 
 
@@ -7,22 +7,19 @@ bool __Tango_CharacterWillFit(int character, int font, int left, int right)
     return right-left>=__Tango_GetCharacterWidth(character, font);
 }
 
-
 bool __Tango_WordWillFit(int ptr, int font, int left, int right)
 {
     return (right-left>=__Tango_GetWordWidth(ptr, font));
 }
 
-
 // How far the textbox should be scrolled down to display the bottom line.
 int __Tango_GetTargetOffset()
 {
-    return __Tango_GetCurrStrData(__TANGO_DATA_CHAR_Y)-
+    return __Tango_GetCurrStrData(__TSDIDX_CHAR_Y)-
            __Tango_GetCurrStrDefData(__TANGO_STRDEF_Y)+
            __Tango_GetCurrFontData(__TANGO_FONT_CHAR_HEIGHT)-
            __Tango_GetCurrStyleData(TANGO_STYLE_TEXT_HEIGHT);
 }
-
 
 // Get the total width of a series of printable characters in the given font.
 // Functions are not evaluated, so any text they would produce is not taken
@@ -53,7 +50,6 @@ int __Tango_GetWordWidth(int ptr, int font)
     return width;
 }
 
-
 // Get the width of a character. The character is assumed to be a space
 // or a valid printable character.
 int __Tango_GetCharacterWidth(int character, int font)
@@ -63,4 +59,3 @@ int __Tango_GetCharacterWidth(int character, int font)
     else
         return font[character+__TANGO_FONT_ASCII_TO_TANGO];
 }
-

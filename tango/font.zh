@@ -1,4 +1,4 @@
-// tango.zh alpha 2
+// tango.zh alpha 3
 // Constants for defining and working with fonts
 
 const int TANGO_FONT_BUILTIN = 0;

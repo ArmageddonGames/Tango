@@ -1,0 +1,63 @@
+// An NPC that uses Tango_Sync() and @sync() to make Link walk away and back.
+
+ffc script WalkAway
+{
+    void run(int message)
+    {
+        bool talking=false;
+        int stringID;
+        
+        while(true)
+        {
+            if(!talking && !linkAlreadyTalking && LinkWantsToTalk(this))
+            {
+                stringID=ShowMessage(message, TANGO_STRING_NORMAL, STYLE_PLAIN, 32, 32);
+                if(stringID==TANGO_INVALID)
+                    continue;
+                else
+                {
+                    talking=true;
+                    linkAlreadyTalking=true;
+                    BossLinkAround(this);
+                }
+            }
+            
+            // Already almost done by this point
+            if(talking)
+            {
+                talking=Tango_StringIsVisible(stringID);
+                if(!talking)
+                    linkAlreadyTalking=false;
+            }
+            
+            Waitframe();
+        }
+    }
+    
+    void BossLinkAround(ffc this)
+    {
+        // Wait for the first @sync()
+        Tango_Sync(1);
+        
+        // Link's been told to walk away
+        while(Distance(this->X, this->Y, Link->X, Link->Y)<80)
+            Waitframe();
+        
+        // Tell the string to proceed
+        Tango_Sync(2);
+        
+        // Farther!
+        while(Distance(this->X, this->Y, Link->X, Link->Y)<176)
+            Waitframe();
+        
+        // Keep talking
+        Tango_Sync(3);
+        
+        // Come back
+        while(Distance(this->X, this->Y, Link->X, Link->Y)>32)
+            Waitframe();
+        
+        // Finish up
+        Tango_Sync(4);
+    }
+}

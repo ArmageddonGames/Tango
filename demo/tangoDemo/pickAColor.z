@@ -39,7 +39,7 @@ ffc script PickAColor
         // The string will set Tango_D[0] to 1 when the menu should start
         while(Tango_D[0]==0)
             Waitframe();
-        Tango_ActivateMenu();
+        Tango_ActivateMenu(false);
         while(Tango_MenuIsActive())
             Waitframe();
         

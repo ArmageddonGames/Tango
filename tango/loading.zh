@@ -1,4 +1,4 @@
-// tango.zh alpha 2
+// tango.zh alpha 3
 // Functions involved in loading strings into __Tango_StringBuffer[].
 
 
@@ -6,24 +6,31 @@
 const int __TANGO_PAD_NUMBER = 12;
 const int __TANGO_PAD_ORDINAL = 9;
 const int __TANGO_PAD_SAVENAME = 8;
+// @string's padding is customizable, so it's in the main tango.zh file.
 
 
 
 void Tango_SetString(int stringID, int string)
 {
+    if(!__Tango_ValidateString(stringID))
+        return;
+    
     __Tango_SetCurrentString(stringID);
-    int pos=__Tango_Data[__TANGO_IDX_CURRSTR_START];
+    int pos=__Tango_Data[__TCS_START];
     __Tango_LoadString(string, pos);
 }
 
 
 void Tango_SetMessage(int stringID, int messageID)
 {
+    if(!__Tango_ValidateString(stringID))
+        return;
+    
     int buffer[256];
     Game->GetMessage(messageID, buffer);
     
     __Tango_SetCurrentString(stringID);
-    int pos=__Tango_Data[__TANGO_IDX_CURRSTR_START];
+    int pos=__Tango_Data[__TCS_START];
     __Tango_LoadString(buffer, pos);
 }
 
@@ -61,7 +68,7 @@ void __Tango_LoadString(int string, int dest)
                     dest++;
                 }
                 
-                if(dest>=__Tango_Data[__TANGO_IDX_CURRSTR_END])
+                if(dest>=__Tango_Data[__TCS_END])
                 {
                     // Overflowed. Processing the string with an incomplete
                     // function might hang the game, so remove it.
@@ -84,7 +91,7 @@ void __Tango_LoadString(int string, int dest)
     
     // Make certain the string is terminated. This is necessary if it
     // had trailing spaces or overflowed.
-    dest=Min(dest, __Tango_Data[__TANGO_IDX_CURRSTR_END]-1);
+    dest=Min(dest, __Tango_Data[__TCS_END]-1);
     __Tango_StringBuffer[dest]=NULL;
     
     __Tango_LogMessage(__TANGO_MSG_LOAD_END, 0);
@@ -123,6 +130,8 @@ void __Tango_ParseCode(int string, int src, int dest, int output)
                accumulator==__TANGO_SETTER_INCREMENT)
                 __Tango_SetChar(dest, __TANGO_SETTER_MARKER);
             else if(accumulator==__TANGO_FLOW_IF ||
+                    accumulator==__TANGO_FLOW_ELSEIF ||
+                    accumulator==__TANGO_FLOW_ELSE ||
                     accumulator==__TANGO_FLOW_WHILE ||
                     accumulator==__TANGO_FLOW_WAITUNTIL)
                 __Tango_SetChar(dest, __TANGO_FLOW_MARKER);
@@ -136,6 +145,8 @@ void __Tango_ParseCode(int string, int src, int dest, int output)
             
             // Add the appropriate end marker
             if(accumulator==__TANGO_FLOW_IF ||
+               accumulator==__TANGO_FLOW_ELSEIF ||
+               accumulator==__TANGO_FLOW_ELSE ||
                accumulator==__TANGO_FLOW_WHILE ||
                accumulator==__TANGO_FLOW_WAITUNTIL)
             {
@@ -159,6 +170,12 @@ void __Tango_ParseCode(int string, int src, int dest, int output)
             __Tango_SetChar(dest+1, accumulator);
             dest+=2;
         }
+        else if(character==NULL)
+        {
+            // End of the string? The function's incomplete.
+            __Tango_LogError(__TANGO_ERROR_INCOMPLETE_FUNCTION, 0);
+            done=true;
+        }
         else // Invalid; just skip it
             src++;
     }
@@ -168,9 +185,9 @@ void __Tango_ParseCode(int string, int src, int dest, int output)
 }
 
 
-// Parses the arguments to a string function and puts the results into
-// __Tango_StringBuffer. Starts after the opening parenthesis and ends
-// after the closing parenthesis.
+// Scans each argument to a function to determine its type, then calls
+// __Tango_ParseNumber() or __Tango_ParseCode() accordingly. Starts after
+// the opening parenthesis and ends after the closing parenthesis.
 void __Tango_ParseArgs(int string, int src, int dest, int output)
 {
     bool done=false;
@@ -200,6 +217,12 @@ void __Tango_ParseArgs(int string, int src, int dest, int output)
             // The end
             done=true;
             src++;
+        }
+        else if(character==NULL)
+        {
+            // End of the string? The function's incomplete.
+            __Tango_LogError(__TANGO_ERROR_INCOMPLETE_FUNCTION, 0);
+            done=true;
         }
         else // Either a space or an invalid character; skip it
             src++;
@@ -236,14 +259,21 @@ void __Tango_ParseNumber(int string, int src, int dest, int output)
             accumulator+=character-__TANGO_CHAR_0;
             src++;
         }
-        else // TODO decimal points
+        // TODO decimal points
+        else if(character==TANGO_CHAR_SPACE || character==__TANGO_CHAR_RPAREN)
         {
-            // Invalid character, hopefully a space or right parenthesis
+            // End of the number
             if(negative)
                 accumulator=-accumulator;
             __Tango_SetChar(dest, __TANGO_NUM_MARKER);
             __Tango_SetChar(dest+1, accumulator);
             dest+=2;
+            done=true;
+        }
+        else
+        {
+            // Invalid character
+            __Tango_LogError(__TANGO_ERROR_INCOMPLETE_FUNCTION, 0);
             done=true;
         }
     }
@@ -275,7 +305,7 @@ int __Tango_PaddingNeeded(int function, int start, int end)
 
 void __Tango_SetChar(int pos, int character)
 {
-    if(pos>=__Tango_Data[__TANGO_IDX_CURRSTR_END])
+    if(pos>=__Tango_Data[__TCS_END])
     {
         __Tango_LogError(__TANGO_ERROR_OVERFLOW, 0);
         return;
