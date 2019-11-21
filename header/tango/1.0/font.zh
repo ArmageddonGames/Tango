@@ -1,5 +1,5 @@
 // tango.zh
-// Version 1.0.0
+// Version 1.1.0
 
 
 // Constants for defining and working with fonts
@@ -27,4 +27,3 @@ const int __TANGO_FONT_ASCII_TO_CUSTOM = -33;
 // Highest character number in built-in fonts
 const int __TANGO_FONT_BUILTIN_MAX = 255;
 const int __TANGO_FONT_EXTENDED_START = 256;
-

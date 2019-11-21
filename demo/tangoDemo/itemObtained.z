@@ -28,4 +28,3 @@ item script ItemObtained
         Tango_ActivateSlot(slot);
     }
 }
-

@@ -1,5 +1,5 @@
 // tango.zh
-// Version 1.0.0
+// Version 1.1.0
 
 
 // Background CSet and color 0-15
@@ -16,7 +16,13 @@ const int TQS_MORE_CSET = 7;
 
 // Cursor combo and CSet
 const int TQS_CURSOR_COMBO = 410;
-const int TQS_CURSOR_CSET = 0;
+const int TQS_CURSOR_CSET = 7;
+
+// Menu scrolling indicators
+const int TQS_SCROLL_UP_COMBO = 408;
+const int TQS_SCROLL_UP_CSET = 7;
+const int TQS_SCROLL_DOWN_COMBO = 409;
+const int TQS_SCROLL_DOWN_CSET = 7;
 
 // Menu sound effects
 const int TQS_SFX_MOVE = 5;
@@ -97,7 +103,17 @@ void SetUpTQSStyle()
     
     Tango_SetStyleAttribute(STYLE_TQS, TANGO_STYLE_MENU_CURSOR_COMBO, TQS_CURSOR_COMBO);
     Tango_SetStyleAttribute(STYLE_TQS, TANGO_STYLE_MENU_CURSOR_CSET, TQS_CURSOR_CSET);
-    Tango_SetStyleAttribute(STYLE_TQS, TANGO_STYLE_MENU_CURSOR_WIDTH, 16);
+    Tango_SetStyleAttribute(STYLE_TQS, TANGO_STYLE_MENU_CHOICE_INDENT, 16);
+    
+    Tango_SetStyleAttribute(STYLE_TQS, TANGO_STYLE_MENU_SCROLL_UP_COMBO, TQS_SCROLL_UP_COMBO);
+    Tango_SetStyleAttribute(STYLE_TQS, TANGO_STYLE_MENU_SCROLL_UP_CSET, TQS_SCROLL_UP_CSET);
+    Tango_SetStyleAttribute(STYLE_TQS, TANGO_STYLE_MENU_SCROLL_UP_X, 144);
+    Tango_SetStyleAttribute(STYLE_TQS, TANGO_STYLE_MENU_SCROLL_UP_Y, 32);
+    Tango_SetStyleAttribute(STYLE_TQS, TANGO_STYLE_MENU_SCROLL_DOWN_COMBO, TQS_SCROLL_DOWN_COMBO);
+    Tango_SetStyleAttribute(STYLE_TQS, TANGO_STYLE_MENU_SCROLL_DOWN_CSET, TQS_SCROLL_DOWN_CSET);
+    Tango_SetStyleAttribute(STYLE_TQS, TANGO_STYLE_MENU_SCROLL_DOWN_X, 144);
+    Tango_SetStyleAttribute(STYLE_TQS, TANGO_STYLE_MENU_SCROLL_DOWN_Y, 48);
+    
     Tango_SetStyleAttribute(STYLE_TQS, TANGO_STYLE_MENU_CURSOR_MOVE_SFX, TQS_SFX_MOVE);
     Tango_SetStyleAttribute(STYLE_TQS, TANGO_STYLE_MENU_SELECT_SFX, TQS_SFX_SELECT);
     Tango_SetStyleAttribute(STYLE_TQS, TANGO_STYLE_MENU_CANCEL_SFX, TQS_SFX_CANCEL);
@@ -121,4 +137,3 @@ global script TangoQuickStartActiveScript
         }
     }
 }
-

@@ -1,5 +1,5 @@
 // tango.zh
-// Version 1.0.0
+// Version 1.1.0
 
 
 // Functions relating to glyph and word sizes.
@@ -85,4 +85,3 @@ int __Tango_GetCharacterWidth(int character, int font)
     else
         return font[character+__TANGO_FONT_ASCII_TO_TANGO];
 }
-

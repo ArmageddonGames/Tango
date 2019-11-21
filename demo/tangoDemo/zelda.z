@@ -53,4 +53,3 @@ ffc script Zelda
         Tango_ActivateSlot(slot2);
     }
 }
-

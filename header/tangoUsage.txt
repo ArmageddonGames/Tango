@@ -1,5 +1,5 @@
 tango.zh
-Version 1.0.0
+Version 1.1.0
 
 
 ================ Overview ================
@@ -76,18 +76,18 @@ is likely to cause problems.
 
 There are three reasons you might use different slot types.
 
-1: Ordering
-Text slots are drawn to the screen in the order they're defined in
-__Tango_SlotDefs[]. That means later slots will appear on top of earlier
-ones. If there's a string that should always appear on top of any others,
-you can define a slot type that's only used by the last slot.
-
-2: Reservation
+1: Reservation
 There are a limited number of text slots available. If you display several
 strings at once, you could run into a situation where you want to display
 another but have no free slots for it. If there's something you always want
 to be able to show, create a slot type just for that, and you can be sure
 it will be available when you need it.
+
+2: Ordering
+Text slots are drawn to the screen in the order they're defined in
+__Tango_SlotDefs[]. That means later slots will appear on top of earlier
+ones. If there's a string that should always appear on top of any others,
+you can define a slot type that's only used by the last slot.
 
 3: Efficiency
 Using different slot types lets you divide up __Tango_Buffer[] efficiently.
@@ -253,10 +253,12 @@ one of them. It's okay for a variable and a function to have the same name.
 ================ String control codes ================
 
 String control codes are supported only in ZC messages, not ZScript strings.
-They're disabled by default. To enable them, import stringControlCode.zh
-instead of stringControlCodeDisabled.zh.
+They're enabled by default, but they can be disabled if you don't need them.
+To disable them, import stringControlCodeDisabled.zh instead of
+stringControlCode.zh.
 
-Control codes cannot be mixed with Tango code. Something like
+Control codes can be used alongside Tango code, but they cannot be combined.
+Something like
   \20\@rand(61, 63)
 or
   @if(@a0 \16\6)
@@ -270,11 +272,9 @@ no changes are made to any counters.
 ================ Warnings ================
 
 Although Tango performs a lot of input validation, catching every problem
-is not feasible. Some errors can hang or crash the game, so be prepared
-for that when making changes.
+is not feasible. Some errors might hang or crash the game, so be ready for that.
 
 Text is drawn into offscreen bitmaps one character at a time, even when
 an entire string is drawn at once. Using TANGO_FLAG_INSTANTANEOUS with
 long strings will push you significantly closer to the drawing limit.
-
 

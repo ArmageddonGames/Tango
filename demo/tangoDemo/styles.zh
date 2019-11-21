@@ -80,10 +80,10 @@ void SetUpPlainStyle()
     
     Tango_SetStyleAttribute(STYLE_PLAIN, TANGO_STYLE_MENU_CURSOR_COMBO, 707);
     Tango_SetStyleAttribute(STYLE_PLAIN, TANGO_STYLE_MENU_CURSOR_CSET, 0);
-    Tango_SetStyleAttribute(STYLE_PLAIN, TANGO_STYLE_MENU_CURSOR_WIDTH, 10);
     Tango_SetStyleAttribute(STYLE_PLAIN, TANGO_STYLE_MENU_CURSOR_MOVE_SFX, 66);
     Tango_SetStyleAttribute(STYLE_PLAIN, TANGO_STYLE_MENU_SELECT_SFX, 67);
     Tango_SetStyleAttribute(STYLE_PLAIN, TANGO_STYLE_MENU_CANCEL_SFX, 68);
+    Tango_SetStyleAttribute(STYLE_PLAIN, TANGO_STYLE_MENU_CHOICE_INDENT, 10);
     
     Tango_SetStyleAttribute(STYLE_PLAIN, TANGO_STYLE_MORE_COMBO, 710);
     Tango_SetStyleAttribute(STYLE_PLAIN, TANGO_STYLE_MORE_CSET, 10);
@@ -232,4 +232,3 @@ void SetUpCurrentColorStyle()
     Tango_SetStyleAttribute(STYLE_CURRENT_COLOR, TANGO_STYLE_FLAGS,
         TANGO_FLAG_INSTANTANEOUS | TANGO_FLAG_PERSISTENT | TANGO_FLAG_CENTERED);
 }
-

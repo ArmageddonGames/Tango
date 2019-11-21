@@ -10,4 +10,3 @@ int TANGO_FONT_SMALL_EXTENDED[] = {
     2,    // Space between lines
     6     // Character width
 };
-

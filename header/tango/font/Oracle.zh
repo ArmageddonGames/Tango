@@ -9,4 +9,3 @@ int TANGO_FONT_ORACLE[] = {
     0,  // Space between lines,
     8   // Width of each character, including trailing space
 };
-

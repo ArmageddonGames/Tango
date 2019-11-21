@@ -1,5 +1,5 @@
 tango.zh
-Version 1.0.0
+Version 1.1.0
 
 
 
@@ -15,22 +15,32 @@ they may be changed or removed without warning in future versions.
 
 ================ Global script functions ================
 
-Tango_Start()
+void Tango_Start()
  * Clears the menu and all text slots.
  * Call this in the active global script before the main loop.
  
-Tango_Update1()
+void Tango_Update1()
  * Processes each text slot and the menu.
  * After calling this function, the render target will be set to RT_SCREEN.
  * Call this in the active global script's main loop before Waitdraw().
 
-Tango_Update2()
+void Tango_Update2()
  * Draws all active text slots to the screen.
  * After calling this function, the render target will be set to RT_SCREEN.
  * Call this in the active global script's main loop after Waitdraw().
 
+bool Tango_ValidateConfiguration()
+ * This function will check the arrays and text slot definitions for errors
+ * and print a report to allegro.log. It can't catch all possible errors,
+ * but it should get the most common ones. Returns true if no errors were found.
+ * Note that not all potential problems are necessarily invalid; some, such as
+ * overlapping text slots, may be okay. These will be logged, but not
+ * considered errors.
+ * This function should not be used in published quests. It only exists to
+ * help you configure tango.zh correctly.
 
-================ Text slot setup functions ================
+
+================ Text slot management functions ================
 
 int Tango_GetFreeSlot()
 int Tango_GetFreeSlot(int slotType)
@@ -90,6 +100,10 @@ bool Tango_SlotIsActive(int slot)
 bool Tango_AnySlotIsActive()
  * Returns true if any slot is currently being displayed.
 
+bool Tango_SlotIsFinished(int slot)
+ * Returns true if the given slot is finished printing and is still
+ * being displayed.
+
 
 ================ Style setup functions ================
 
@@ -122,6 +136,9 @@ void Tango_AddMenuChoice(int value, int x, int y)
  * Add a menu choice with the given value at the specified position.
  * The value should be greater than 0.
 
+void Tango_MoveMenuChoice(int choice, int x, int y)
+ * Reposition a menu choice on the screen.
+
 void Tango_SetMenuCursor(int combo, int cset)
 void Tango_SetMenuCursor(int combo, int cset, int width, int height)
  * Set the appearance of the menu cursor. If width and height are not
@@ -152,7 +169,9 @@ void Tango_SaveMenuState(int output[])
  * Store the current state of the menu into output. This will store the
  * values and positions of the options, the cursor and sound settings, and
  * the currently selected option.
- * The size of output must be at least 12 + 3 * __TANGO_MAX_MENU_ITEMS.
+ * The size of output must be at least 19 + 3 * __TANGO_MAX_MENU_ITEMS.
+ * This may increase in future versions,so you may want to make the array
+ * larger than necessary.
 
 void Tango_RestoreMenuState(int oldState[])
  * Restore the state saved with Tango_SaveMenuState().
@@ -206,7 +225,9 @@ void Tango_SaveSlotState(int slot, int output[])
  * will not be saved.
  * If a bitmap is specified, the text already rendered will be copied to 
  * that bitmap. The render target will be set to RT_SCREEN afterward.
- * The size of output must be at least the slot's length in the buffer + 20.
+ * The size of output must be at least the slot's length in the buffer + 21.
+ * This may increase in future versions,so you may want to make the array
+ * larger than necessary.
 
 void Tango_RestoreSlotState(int slot, int oldState[], int bitmap)
 void Tango_RestoreSlotState(int slot, int oldState[])
@@ -552,18 +573,31 @@ TANGO_STYLE_TEXT_SFX
 TANGO_STYLE_TEXT_END_SFX
  * The sound played when the end of the text is reached.
 
+TANGO_STYLE_MENU_CHOICE_INDENT
+ * How much extra space to add before each menu choice to make room for
+ * the cursor, in pixels.
+
 TANGO_STYLE_MENU_CURSOR_COMBO
 TANGO_STYLE_MENU_CURSOR_CSET
- * The appearance of the menu cursor.
-
 TANGO_STYLE_MENU_CURSOR_WIDTH
- * How much extra space to add before each menu choice to make room for
- * the cursor.
+TANGO_STYLE_MENU_CURSOR_HEIGHT
+ * The appearance of the menu cursor. Width and height are in tiles.
 
 TANGO_STYLE_MENU_CURSOR_MOVE_SFX
 TANGO_STYLE_MENU_SELECT_SFX
 TANGO_STYLE_MENU_CANCEL_SFX
  * The sounds to play in the menu.
+
+TANGO_STYLE_MENU_SCROLL_UP_COMBO
+TANGO_STYLE_MENU_SCROLL_UP_CSET
+TANGO_STYLE_MENU_SCROLL_UP_X
+TANGO_STYLE_MENU_SCROLL_UP_Y
+TANGO_STYLE_MENU_SCROLL_DOWN_COMBO
+TANGO_STYLE_MENU_SCROLL_DOWN_CSET
+TANGO_STYLE_MENU_SCROLL_DOWN_X
+TANGO_STYLE_MENU_SCROLL_DOWN_Y
+ * If a menu is too large to fit in the text area, these combos will be drawn
+ * to indicate that it can scroll up or down.
 
 TANGO_STYLE_MORE_COMBO
 TANGO_STYLE_MORE_CSET
@@ -843,4 +877,32 @@ f   6   x7                   =      42 +
                                -------
                                5433828 / 10000 = 543.3828
 
+
+================ Error numbers ================
+
+If you use loggingMinimal.zh instead of loggingFull.zh, error messages
+will be logged only as ID numbers. These are all the possible error codes:
+
+101: Attempted to load an invalid message
+102: Attempted to load an invalid string
+103: The text to be loaded would not fit in the buffer
+104: The text contained an invalid or incomplete function call
+105: The text contained an invalid function argument
+106: The text contained an invalid character code
+107: The message contained an incomplete string control code
+108: The message contained a string control code, but they're disabled
+201: The text contained an invalid character
+202: An undefined function was called
+203: An undefined variable was referenced
+204: More than 4 arguments were passed to a function
+205: An invalid argument was given to @string()
+301: A menu with no choices was activated
+302: Too many choices were added to a menu
+303: Tried to move an invalid menu choice
+401: An invalid style ID was used
+402: An invalid slot ID was used
+403: The array passed to Tango_SaveSlotState() or Tango_RestoreSlotState()
+     was too small
+404: The array passed to Tango_SaveMenuState() or Tango_RestoreMenuState()
+     was too small
 

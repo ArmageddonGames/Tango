@@ -47,4 +47,3 @@ ffc script Navi
         this->Y=this->Misc[NAVI_MISC_CENTER_Y]+16*Sin(this->Misc[NAVI_MISC_ANGLE]);
     }
 }
-

@@ -9,4 +9,3 @@ int TANGO_FONT_PHANTOM[] = {
     0, // Space between lines,
     12  // Character width
 };
-

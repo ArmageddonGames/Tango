@@ -28,4 +28,3 @@ const int KNJ_JU      = 45;
 const int HG_KE       = 46;
 const int HG_YO       = 47;
 const int HG_U        = 48;
-

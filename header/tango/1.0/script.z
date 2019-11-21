@@ -1,5 +1,5 @@
 // tango.zh
-// Version 1.0.0
+// Version 1.1.0
 
 
 // Minimal global script. You probably don't actually want to use this.
@@ -20,4 +20,3 @@ global script TangoActiveScript
         }
     }
 }
-
