@@ -1,5 +1,5 @@
 // tango.zh
-// Version 1.2.0
+// Version 1.3.1
 
 
 // Various functions to simplify accessing a single element of
@@ -38,7 +38,10 @@ int __Tango_GetCurrStyleData(int what)
 
 int __Tango_GetCurrentCSet()
 {
-    int cset=__Tango_GetCurrSlotData(__TSDIDX_CSET);
+    int cset=__Tango_GetCurrSlotData(__TSDIDX_ALT_CSET);
+    if(cset>=0)
+        return cset;
+    cset=__Tango_GetCurrSlotData(__TSDIDX_CSET);
     if(cset==TANGO_DEFAULT)
         cset=__Tango_GetCurrStyleData(TANGO_STYLE_TEXT_CSET);
     return cset;
@@ -46,11 +49,19 @@ int __Tango_GetCurrentCSet()
 
 int __Tango_GetCurrentColor()
 {
-    int color=__Tango_GetCurrSlotData(__TSDIDX_COLOR);
+    int color=__Tango_GetCurrSlotData(__TSDIDX_ALT_COLOR);
+    if(color>=0)
+        return color;
+    color=__Tango_GetCurrSlotData(__TSDIDX_COLOR);
     if(color==TANGO_DEFAULT)
         color=__Tango_GetCurrStyleData(TANGO_STYLE_TEXT_COLOR);
 
     return color;
+}
+
+int __Tango_GetCurrentTileOffset()
+{
+    return __Tango_GetCurrSlotData(__TSDIDX_TILE_OFFSET);
 }
 
 int __Tango_GetCurrentSpeed()

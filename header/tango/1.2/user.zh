@@ -1,5 +1,5 @@
 // tango.zh
-// Version 1.2.0
+// Version 1.3.1
 
 
 // Functions for the user's use that don't really fit elsewhere.
@@ -95,6 +95,20 @@ void Tango_SetSlotPosition(int slot, int x, int y)
     __Tango_SlotData[dataStart+__TSDIDX_SCREEN_Y]=y;
 }
 
+int Tango_GetSlotX(int slot)
+{
+    if(!__Tango_ValidateSlot(slot))
+        return -1;
+    return __Tango_SlotData[slot*__TANGO_SIZEOF_DATA+__TSDIDX_SCREEN_X];
+}
+
+int Tango_GetSlotY(int slot)
+{
+    if(!__Tango_ValidateSlot(slot))
+        return -1;
+    return __Tango_SlotData[slot*__TANGO_SIZEOF_DATA+__TSDIDX_SCREEN_Y];
+}
+
 void Tango_ActivateSlot(int slot)
 {
     if(!__Tango_ValidateSlot(slot))
@@ -107,6 +121,8 @@ void Tango_ActivateSlot(int slot)
        __Tango_SlotData[dataStart+__TSDIDX_STATE]==__TANGO_STATE_RESERVED)
     {
         __Tango_SlotData[dataStart+__TSDIDX_STATE]=__TANGO_STATE_ACTIVE;
+        __Tango_SlotData[dataStart+__TSDIDX_ALT_CSET]=-1;
+        __Tango_SlotData[dataStart+__TSDIDX_ALT_COLOR]=-1;
         
         // Clear the text drawing area
         __Tango_ClearSlotBitmap(slot);

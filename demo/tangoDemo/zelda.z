@@ -1,4 +1,7 @@
 // An NPC variant that shows two messages with special styles.
+//
+// This script and its messages demonstrate displaying two messages at once,
+// @sync(), complex backdrops, and a custom function that changes the backdrop.
 
 ffc script Zelda
 {
@@ -8,10 +11,12 @@ ffc script Zelda
         {
             if(StartTalking(this))
             {
-                // Get a string
+                // Two messages will be displayed at once,
+                //so we need to get two slots
                 int slot1=Tango_GetFreeSlot(TANGO_SLOT_NORMAL);
                 if(slot1==TANGO_INVALID)
                 {
+                    // Didn't get even one slot...
                     StopTalking();
                     continue;
                 }
@@ -24,6 +29,9 @@ ffc script Zelda
                 int slot2=Tango_GetFreeSlot(TANGO_SLOT_NORMAL);
                 if(slot2==TANGO_INVALID)
                 {
+                    // Didn't get the second slot; be sure to clear
+                    // the reservation on the first one before returning
+                    Tango_ClearSlot(slot1);
                     StopTalking();
                     continue;
                 }

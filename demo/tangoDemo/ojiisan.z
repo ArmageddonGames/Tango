@@ -1,4 +1,8 @@
-// NPC variant. Uses a unique string and message style. Gives Link a sword.
+// An old man who gives Link a sword.
+//
+// This demonstrates a custom font with non-Latin characters and synchronizing
+// a script and message with @sync() and Tango_Sync(). It also gives Link
+// the item that launches the ItemObtained script.
 
 ffc script Ojiisan
 {

@@ -39,7 +39,8 @@ int ShowMessage(int message, int type, int style, float x, float y)
     return slot;
 }
 
-// Returns true if Link is trying to talk to this NPC.
+// Returns true and sets linkAlreadyTalking to true if Link is trying
+// to talk to this NPC.
 bool StartTalking(ffc this)
 {
     if(!Link->PressA || linkAlreadyTalking)

@@ -1,4 +1,8 @@
 // An NPC variant that shows a long message that can be scrolled up and down.
+//
+// This is a demonstration of what happens when text is too long to fit
+// in its box, chained messages, and how to scroll the text up and down
+// in the script.
 
 ffc script LongMessage
 {

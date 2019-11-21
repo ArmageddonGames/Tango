@@ -1,4 +1,9 @@
-// Demo of @string and non-text-based menus.
+// An NPC who asks you to pick a tree color, then comments on it.
+//
+// This demonstrates non-text-based menus, synchronizing with @sync() and
+// Tango_Sync(), reading the current cursor position in a menu, updating
+// a text box as that selection changes, and using @a0 as an argument
+// to @string().
 
 ffc script PickAColor
 {
@@ -54,7 +59,7 @@ ffc script PickAColor
             currentChoice=Tango_GetCurrentMenuChoice()-1;
             if(currentChoice!=lastChoice)
             {
-                // The cursor has moved or the menu was just activated;
+                // The cursor has moved (or the menu was just activated);
                 // load up the new string
                 if(choiceSlot!=TANGO_INVALID)
                     Tango_ClearSlot(choiceSlot);

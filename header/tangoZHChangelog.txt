@@ -1,5 +1,18 @@
 tango.zh
-Version 1.2.0
+Version 1.3.1
+
+
+1.3.1 (2017-12-27)
+* Corrected subdirectory in the main file's import statements.
+
+
+1.3.0 (2017-09-10)
+* __Tango_PressAdvance() now takes an argument indicating how long the slot
+    has been waiting. This allows the slot to advance if A or B are held
+    for a period of time.
+* Added the ability to highlight text with [[double brackets]].
+* Added Tango_GetSlotX() and Tango_GetSlotY().
+
 
 1.2.0 (2016-09-16)
 * Added Tango_SetMenuAutosaveDest(), which allows a menu's state

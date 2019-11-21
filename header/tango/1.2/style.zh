@@ -1,5 +1,5 @@
 // tango.zh
-// Version 1.2.0
+// Version 1.3.1
 
 
 // Style-related constants and functions.
@@ -44,7 +44,24 @@ const int TANGO_STYLE_MORE_CSET              = 32;
 const int TANGO_STYLE_MORE_X                 = 33;
 const int TANGO_STYLE_MORE_Y                 = 34;
 const int TANGO_STYLE_FLAGS                  = 35;
-const int __TANGO_SIZEOF_STYLE               = 36;
+const int TANGO_STYLE_ALT_CSET_1             = 36;
+const int TANGO_STYLE_ALT_CSET_2             = 37;
+const int TANGO_STYLE_ALT_CSET_3             = 38;
+const int TANGO_STYLE_ALT_CSET_4             = 39;
+const int TANGO_STYLE_ALT_COLOR_1            = 40;
+const int TANGO_STYLE_ALT_COLOR_2            = 41;
+const int TANGO_STYLE_ALT_COLOR_3            = 42;
+const int TANGO_STYLE_ALT_COLOR_4            = 43;
+const int TANGO_STYLE_ALT_OFFSET_1           = 44;
+const int TANGO_STYLE_ALT_OFFSET_2           = 45;
+const int TANGO_STYLE_ALT_OFFSET_3           = 46;
+const int TANGO_STYLE_ALT_OFFSET_4           = 47;
+const int __TANGO_SIZEOF_STYLE               = 48;
+
+// Add 1-4 to get the corresponding value
+const int __TANGO_STYLE_ALT_CSET             = 35;
+const int __TANGO_STYLE_ALT_COLOR            = 39;
+const int __TANGO_STYLE_ALT_OFFSET           = 43;
 
 // Style flags
 const int TANGO_FLAG_ENABLE_SPEEDUP     = 0000000001b;

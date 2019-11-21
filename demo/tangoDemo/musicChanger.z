@@ -1,4 +1,9 @@
-// Persistent menu example. Lets the player change the DMap music.
+// Lets the player change the DMap music.
+//
+// This is an example of a menu that doesn't close automatically when
+// a choice is made. Each time a menu item is selected, the script can see
+// what was chosen and decide how to respond. In this case, three choices
+// change the music, and one closes the menu.
 
 ffc script MusicChanger
 {

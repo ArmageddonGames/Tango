@@ -1,4 +1,7 @@
 // Shows a message when Link talks to it.
+//
+// This is a minimal usage example. It's also used to show messages that
+// demonstrate features that don't require any additional script support.
 
 ffc script NPC
 {
@@ -9,7 +12,8 @@ ffc script NPC
             if(StartTalking(this))
             {
                 // Display the assigned message
-                int slot=ShowMessage(message, TANGO_SLOT_NORMAL, STYLE_PLAIN, 32, 32);
+                int slot=ShowMessage(message, TANGO_SLOT_NORMAL, STYLE_PLAIN,
+                  32, 32);
                 
                 // If the message was displayed successfully...
                 if(slot!=TANGO_INVALID)

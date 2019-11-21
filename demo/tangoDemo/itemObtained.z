@@ -1,4 +1,7 @@
-// Item pickup script. Displays an "item obtained" message.
+// An item pickup script that displays an "item obtained" message.
+//
+// This demonstrates moving a text slot using commands in the string itself and
+// lodaing a partial string.
 
 item script ItemObtained
 {
