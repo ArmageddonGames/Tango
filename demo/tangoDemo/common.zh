@@ -1,4 +1,4 @@
-// Juust a few functions common to the different scripts.
+// Just a few functions common to the different scripts.
 
 bool linkAlreadyTalking;
 
@@ -24,7 +24,9 @@ int ShowMessage(int message, int type, int style, float x, float y)
         return TANGO_INVALID;
     
     Tango_ClearSlot(slot);
-    Tango_LoadMessage(slot, message);
+    
+    // If a message contains '%', only the portion after that is loaded.
+    Tango_LoadMessage(slot, message,  '%');
     Tango_SetSlotStyle(slot, style);
     Tango_SetSlotPosition(slot, x, y);
     Tango_ActivateSlot(slot);
@@ -61,3 +63,4 @@ bool LinkWantsToTalk(ffc this)
     
     return false;
 }
+

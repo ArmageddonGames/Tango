@@ -1,5 +1,5 @@
 // tango.zh
-// Beta 1
+// Beta 2
 
 
 // Minimal global script. You probably don't actually want to use this.
@@ -20,3 +20,4 @@ global script TangoActiveScript
         }
     }
 }
+

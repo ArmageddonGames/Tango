@@ -12,7 +12,7 @@ int zeldaFrame[]= {
     TANGO_DRAW_RECT_TRANS,
         0,       // CSet
         11,      // Color
-        4, 5,    // X, Y (pixels)
+        4, 5,    // X, Y offsets from slot position (pixels)
         216, 70, // Width, height (pixels)
     TANGO_DRAW_TILE,
         1420, // Tile
@@ -232,3 +232,4 @@ void SetUpCurrentColorStyle()
     Tango_SetStyleAttribute(STYLE_CURRENT_COLOR, TANGO_STYLE_FLAGS,
         TANGO_FLAG_INSTANTANEOUS | TANGO_FLAG_PERSISTENT | TANGO_FLAG_CENTERED);
 }
+

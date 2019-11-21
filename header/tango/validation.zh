@@ -1,8 +1,9 @@
 // tango.zh
-// Beta 1
+// Beta 2
+
 
 // Various validation functions. All return false if whatever it is
-// is invalid, and some log errors.
+// is invalid. They may or may not also log errors.
 
 bool __Tango_ValidateSlot(int slot)
 {
@@ -51,3 +52,4 @@ bool __Tango_ValidateMessage(int msg)
     
     return true;
 }
+

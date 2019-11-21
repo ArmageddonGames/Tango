@@ -1,5 +1,5 @@
 // tango.zh
-// Beta 1
+// Beta 2
 
 
 // Functions involved in loading text into __Tango_Buffer[].
@@ -96,17 +96,19 @@ void __Tango_LoadMessage(int slot, int msg, bool append, int startChar)
     __Tango_LoadIntoBuffer(buffer, srcPtr, destPtr);
 }
 
-// Find the position after the start character.
+// Find the position after the start character or 0 if it's not in the string.
 int __Tango_FindSrcStart(int str, int startChar)
 {
     if(startChar<=0)
         return 0;
     
-    for(int pos=1; true; pos++)
+    for(int pos=1; str[pos]!=NULL; pos++)
     {
-        if(str[pos-1]==startChar || str[pos]==NULL)
+        if(str[pos-1]==startChar)
             return pos;
     }
+    
+    return 0;
 }
 
 // Find the start of the slot or the end of its current text,
@@ -157,9 +159,15 @@ void __Tango_LoadIntoBuffer(int src, int srcPtr, int destPtr)
                 srcPtr=newPos[0];
                 destPtr=newPos[1];
                 
-                // It was @0; stop here.
+                // Stop here if it was @0.
                 if(__Tango_Buffer[destPtr-1]==NULL)
-                    break;
+                {
+                    if(destPtr<2)
+                        break;
+                    // Make sure it wasn't actually an arument of 0...
+                    else if(__Tango_Buffer[destPtr-2]!=__TANGO_NUM_MARKER)
+                        break;
+                }
             }
         }
         else
@@ -527,7 +535,7 @@ int __Tango_SetEndMarker(int destPtr, int func)
     }
 }
 
-// Advances srcPtr beyond and spaces in src.
+// Advances srcPtr beyond any spaces in src.
 int __Tango_EatSpaces(int src, int srcPtr)
 {
     while(src[srcPtr]==' ')
@@ -589,3 +597,4 @@ int __Tango_GetStringEnd(int string)
     
     return lastNonSpace;
 }
+

@@ -1,5 +1,5 @@
 // tango.zh
-// Beta 1
+// Beta 2
 
 
 // Style-related constants and functions.
@@ -166,3 +166,4 @@ void Tango_ClearStyle(int style)
     __Tango_Styles[styleStart+TANGO_STYLE_MORE_Y]=0;
     __Tango_Styles[styleStart+TANGO_STYLE_FLAGS]=0;
 }
+

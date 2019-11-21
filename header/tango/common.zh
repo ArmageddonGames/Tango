@@ -1,5 +1,5 @@
 // tango.zh
-// Beta 1
+// Beta 2
 
 
 // __Tango_Data[] indices
@@ -24,6 +24,8 @@ const int __TDIDX_FIRST_CHOICE_ON_LINE = 23;
 const int __TDIDX_REFRESH_STYLE        = 24;
 const int __TDIDX_CHOICE_DATA          = 25;
 
+const int __TANGO_MENU_DATA_START = 12; // Used by Tango_SaveMenuState()
+
 // Current slot data (more __Tango_Data[] indices)
 const int __TCS_ID          = 0;
 const int __TCS_START       = 1;
@@ -47,24 +49,25 @@ const int __TANGO_GFLAG_UNPRESS_MENU        = 01000b;
 const int __TANGO_GFLAG_UNPRESS_ALL         = 10000b;
 
 // __Tango_SlotData[] indices
-const int __TSDIDX_STYLE       = 0;
-const int __TSDIDX_STATE       = 1;
-const int __TSDIDX_COUNTER     = 2;
-const int __TSDIDX_POSITION    = 3;
-const int __TSDIDX_CHAR_X      = 4;
-const int __TSDIDX_CHAR_Y      = 5;
-const int __TSDIDX_SCREEN_X    = 6;
-const int __TSDIDX_SCREEN_Y    = 7;
-const int __TSDIDX_CSET        = 8;
-const int __TSDIDX_COLOR       = 9; // Built-in fonts only
-const int __TSDIDX_SPEED       = 10;
-const int __TSDIDX_SFX         = 11;
-const int __TSDIDX_OFFSET      = 12;
-const int __TSDIDX_SCROLLING   = 13;
-const int __TSDIDX_NEXT_STRING = 14;
-const int TANGO_VAR_A0        = 15;
-const int TANGO_VAR_A1        = 16;
-const int __TANGO_SIZEOF_DATA  = 17;
+const int __TSDIDX_STYLE             = 0;
+const int __TSDIDX_STATE             = 1;
+const int __TSDIDX_COUNTER           = 2;
+const int __TSDIDX_POSITION          = 3;
+const int __TSDIDX_CHAR_X            = 4;
+const int __TSDIDX_CHAR_Y            = 5;
+const int __TSDIDX_SCREEN_X          = 6;
+const int __TSDIDX_SCREEN_Y          = 7;
+const int __TSDIDX_CSET              = 8;
+const int __TSDIDX_COLOR             = 9; // Built-in fonts only
+const int __TSDIDX_SPEED             = 10;
+const int __TSDIDX_SFX               = 11;
+const int __TSDIDX_OFFSET            = 12;
+const int __TSDIDX_SCROLLING         = 13;
+const int __TSDIDX_NEXT_STRING       = 14;
+const int __TSDIDX_IGNORE_SPEED_KEYS = 15;
+const int TANGO_VAR_A0               = 16;
+const int TANGO_VAR_A1               = 17;
+const int __TANGO_SIZEOF_DATA        = 18;
 
 // __Tango_SlotDefs[] data
 const int __TSDEF_TYPE   = 0;
@@ -147,6 +150,11 @@ int __Tango_GetCurrSlotDefData(int what)
     return __Tango_SlotDefs[__Tango_Data[__TCS_DEF_START]+what];
 }
 
+int __Tango_GetSlotDefData(int slot, int what)
+{
+    return __Tango_SlotDefs[slot*__TANGO_SIZEOF_SLOTDEF+what];
+}
+
 int __Tango_GetCurrFontData(int what)
 {
     int font=__Tango_Data[__TCS_FONT];
@@ -184,7 +192,9 @@ int __Tango_GetCurrentSpeed()
 {
     int speed=__Tango_GetCurrSlotData(__TSDIDX_SPEED);
     if(speed==TANGO_DEFAULT)
-        speed=__Tango_GetCurrStyleData(TANGO_STYLE_TEXT_SPEED);
+        return __Tango_GetCurrStyleData(TANGO_STYLE_TEXT_SPEED);
+    else if(speed<0)
+        return 0;
     return speed;
 }
 
@@ -311,3 +321,4 @@ int __Tango_FloatToASCII(int buffer, float value, bool allDigits)
     buffer[pos]=NULL;
     return pos;
 }
+

@@ -1,5 +1,5 @@
 // tango.zh
-// Beta 1
+// Beta 2
 
 
 // Functions used to draw to the screen or an offscreen bitmap.
@@ -317,3 +317,4 @@ void __Tango_DrawCurrentLine(int x, int y)
     Screen->Rectangle(0, srcX, srcY, srcX+width, srcY+16, 0, -1, 0, 0, 0,
                       true, OP_OPAQUE);
 }
+

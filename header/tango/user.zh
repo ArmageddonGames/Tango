@@ -1,5 +1,5 @@
 // tango.zh
-// Beta 1
+// Beta 2
 
 
 // Functions for the user's use that don't really fit elsewhere.
@@ -51,6 +51,7 @@ void Tango_ClearSlot(int slot)
     __Tango_SlotData[dataStart+__TSDIDX_OFFSET]=0;
     __Tango_SlotData[dataStart+__TSDIDX_SCROLLING]=0;
     __Tango_SlotData[dataStart+__TSDIDX_NEXT_STRING]=0;
+    __Tango_SlotData[dataStart+__TSDIDX_IGNORE_SPEED_KEYS]=0;
     __Tango_SlotData[dataStart+TANGO_VAR_A0]=0;
     __Tango_SlotData[dataStart+TANGO_VAR_A1]=0;
     
@@ -114,6 +115,14 @@ void Tango_ActivateSlot(int slot)
         int flags=Tango_GetSlotStyleAttribute(slot, TANGO_STYLE_FLAGS);
         if((flags&TANGO_FLAG_FREEZE_SCREEN)!=0)
             __Tango_IncScreenFreeze();
+        
+        // Try to determine if the activation was triggered by pressing
+        // the same button used to speed up text. If so, don't speed up
+        // the text until it's pressed again.
+        if(__Tango_PressSpeedup())
+            __Tango_SlotData[dataStart+__TSDIDX_IGNORE_SPEED_KEYS]=1;
+        else if(__Tango_PressSuperSpeed())
+            __Tango_SlotData[dataStart+__TSDIDX_IGNORE_SPEED_KEYS]=2;
     }
 }
 
@@ -173,6 +182,65 @@ void Tango_Sync(int value)
     }
 }
 
+// There's also the bitmap stuff...
+void Tango_SaveSlotState(int slot, int output)
+{
+    int bufStart=__Tango_GetSlotDefData(slot, __TSDEF_START);
+    int bufSize=__Tango_GetSlotDefData(slot, __TSDEF_LENGTH);
+    
+    for(int i=0; i<bufSize; i++)
+        output[i]=__Tango_Buffer[i+bufStart];
+    
+    int dataOffset=slot*__TANGO_SIZEOF_DATA;
+    
+    for(int i=0; i<__TANGO_SIZEOF_DATA; i++)
+        output[i+bufSize]=__Tango_SlotData[i+dataOffset];
+}
+
+void Tango_SaveSlotState(int slot, int output, int bitmap)
+{
+    Tango_SaveSlotState(slot, output);
+    int defStart=slot*__TANGO_SIZEOF_SLOTDEF;
+    int x=__Tango_SlotDefs[defStart+__TSDEF_X];
+    int y=__Tango_SlotDefs[defStart+__TSDEF_X];
+    int width=__Tango_SlotDefs[defStart+__TSDEF_WIDTH];
+    int height=__Tango_SlotDefs[defStart+__TSDEF_HEIGHT];
+    
+    Screen->SetRenderTarget(bitmap);
+    Screen->DrawBitmap(0, __TANGO_BITMAP, x, y, width, height,
+      x, y, width, height, 0, false);
+    Screen->SetRenderTarget(RT_SCREEN);
+}
+
+void Tango_RestoreSlotState(int slot, int oldState)
+{
+    int bufStart=__Tango_GetSlotDefData(slot, __TSDEF_START);
+    int bufSize=__Tango_GetSlotDefData(slot, __TSDEF_LENGTH);
+    
+    for(int i=0; i<bufSize; i++)
+        __Tango_Buffer[i+bufStart]=oldState[i];
+    
+    int dataOffset=slot*__TANGO_SIZEOF_DATA;
+    
+    for(int i=0; i<__TANGO_SIZEOF_DATA; i++)
+        __Tango_SlotData[i+dataOffset]=oldState[i+bufSize];
+}
+
+void Tango_RestoreSlotState(int slot, int oldState, int bitmap)
+{
+    Tango_RestoreSlotState(slot, oldState);
+    int defStart=slot*__TANGO_SIZEOF_SLOTDEF;
+    int x=__Tango_SlotDefs[defStart+__TSDEF_X];
+    int y=__Tango_SlotDefs[defStart+__TSDEF_X];
+    int width=__Tango_SlotDefs[defStart+__TSDEF_WIDTH];
+    int height=__Tango_SlotDefs[defStart+__TSDEF_HEIGHT];
+    
+    Screen->SetRenderTarget(__TANGO_BITMAP);
+    Screen->DrawBitmap(0, bitmap, x, y, width, height,
+      x, y, width, height, 0, false);
+    Screen->SetRenderTarget(RT_SCREEN);
+}
+
 float Tango_ConvertFunctionName(int name)
 {
     float accumulator=0;
@@ -217,3 +285,4 @@ float Tango_ConvertFunctionName(int name)
     
     return accumulator;
 }
+

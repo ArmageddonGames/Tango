@@ -1,5 +1,5 @@
 // tango.zh
-// Beta 1
+// Beta 2
 
 
 // Constants and functions related to processing strings.
@@ -15,10 +15,13 @@ const int __TANGO_STATE_SYNC_WAIT    = 6;
 const int __TANGO_STATE_WAIT_1_FRAME = 7;
 const int __TANGO_STATE_PRESS_A      = 8;
 
+// Added to the state to suspend it
+const int __TANGO_SUSPEND = 100;
+
 // Update speeds
 const int __TANGO_SPEED_NORMAL  = 0;
 const int __TANGO_SPEED_FAST    = 1;
-const int __TANGO_SPEED_INSTANT = 2;
+const int __TANGO_SPEED_SUPER = 2;
 
 
 void __Tango_CheckScreenChange()
@@ -70,7 +73,7 @@ void Tango_Update1()
             __Tango_Data[__TDIDX_GLOBAL_FLAGS]&=~__TANGO_GFLAG_UNPRESS_MENU;
     }
     
-    // Now each string is updated.
+    // Now each text slot is updated.
     for(int i=0; i<__TANGO_NUM_SLOTS; i++)
     {
         __Tango_SetCurrentSlot(i);
@@ -137,40 +140,61 @@ void Tango_Update2()
     }
     
     if(Tango_MenuIsActive())
-        __Tango_DrawMenuCursor();
+    {
+        if(__Tango_CursorPosIsValid())
+            __Tango_DrawMenuCursor();
+    }
 }
 
 void __Tango_UpdateCurrentSlot()
 {
-    int dataStart=__Tango_Data[__TCS_DATA_START];
-    int state=__Tango_SlotData[dataStart+__TSDIDX_STATE];
+    int state=__Tango_SlotData[__Tango_Data[__TCS_DATA_START]+__TSDIDX_STATE];
+    
+    // Check for trivial states first
     
     if(state==__TANGO_STATE_INACTIVE || state==__TANGO_STATE_RESERVED)
         return;
     
+    else if(state==__TANGO_STATE_WAIT_1_FRAME)
+    {
+        __Tango_SlotData[__Tango_Data[__TCS_DATA_START]+__TSDIDX_STATE]=
+          __TANGO_STATE_ACTIVE;
+        return;
+    }
+    
     // Check speed and input blocking flags
     
-    int styleStart=__Tango_Data[__TCS_STYLE_START];
-    int defStart=__Tango_Data[__TCS_DEF_START];
-    int flags=__Tango_Styles[styleStart+TANGO_STYLE_FLAGS];
+    int flags=__Tango_GetCurrStyleData(TANGO_STYLE_FLAGS);
     int speed=__TANGO_SPEED_NORMAL;
+    int ignoreSpeedKeys=__Tango_Data[__TCS_DATA_START]+
+      __TSDIDX_IGNORE_SPEED_KEYS;
     
     if((flags&TANGO_FLAG_ENABLE_SPEEDUP)!=0)
     {
         __Tango_Data[__TDIDX_GLOBAL_FLAGS]|=__TANGO_GFLAG_UNPRESS_SPEEDUP;
-        if(__Tango_InputSpeedup())
+        if(__Tango_SlotData[ignoreSpeedKeys]==1)
+        {
+            if(!__Tango_InputSpeedup())
+                __Tango_SlotData[ignoreSpeedKeys]=0;
+        }
+        else if(__Tango_InputSpeedup())
             speed=__TANGO_SPEED_FAST;
     }
     
     if((flags&TANGO_FLAG_ENABLE_SUPER_SPEED)!=0)
     {
         __Tango_Data[__TDIDX_GLOBAL_FLAGS]|=__TANGO_GFLAG_UNPRESS_SUPER_SPEED;
-        if(__Tango_InputSuperSpeed())
-            speed=__TANGO_SPEED_INSTANT;
+        if(__Tango_SlotData[ignoreSpeedKeys]==2)
+        {
+            if(!__Tango_InputSuperSpeed())
+                __Tango_SlotData[ignoreSpeedKeys]=0;
+        }
+        else if(__Tango_InputSuperSpeed())
+            speed=__TANGO_SPEED_SUPER;
     }
     
     if((flags&TANGO_FLAG_INSTANTANEOUS)!=0)
-        speed=__TANGO_SPEED_INSTANT;
+        speed=__TANGO_SPEED_SUPER;
     
     if((flags&TANGO_FLAG_BLOCK_INPUT)!=0)
         __Tango_Data[__TDIDX_GLOBAL_FLAGS]|=__TANGO_GFLAG_UNPRESS_ALL;
@@ -184,88 +208,127 @@ void __Tango_UpdateCurrentSlot()
             state=__TANGO_STATE_ACTIVE;
             __Tango_SetCurrSlotData(__TSDIDX_STATE, __TANGO_STATE_ACTIVE);
             __Tango_Data[__TDIDX_GLOBAL_FLAGS]|=__TANGO_GFLAG_UNPRESS_ADVANCE;
+            
+            if(__Tango_PressSpeedup())
+                __Tango_SlotData[ignoreSpeedKeys]=1;
+            else if(__Tango_PressSuperSpeed())
+                __Tango_SlotData[ignoreSpeedKeys]=2;
         }
     }
     
+    // No else - advance immediately after pressing A
     if(state==__TANGO_STATE_ACTIVE)
-    {
-        // Scroll and count down the delay if needed.
-        // Both are done at once.
-        if(__Tango_SlotData[dataStart+__TSDIDX_COUNTER]>0)
-            __Tango_CountDown(speed);
-        if(__Tango_SlotData[dataStart+__TSDIDX_SCROLLING]>0)
-            __Tango_Scroll(speed);
-        if(__Tango_SlotData[dataStart+__TSDIDX_COUNTER]==0 &&
-           __Tango_SlotData[dataStart+__TSDIDX_SCROLLING]==0)
-            __Tango_Process(speed);
-    } // End active
-    
-    else if(state==__TANGO_STATE_FINISHED)
-    {
-        bool done=false;
-        
-        if((flags&TANGO_FLAG_AUTO_ADVANCE)!=0)
-        {
-            if(__Tango_SlotData[dataStart+__TSDIDX_COUNTER]>0)
-                __Tango_CountDown(speed);
-            else
-                done=true;
-        }
-        else if(__Tango_PressAdvance())
-        {
-            done=true;
-            __Tango_Data[__TDIDX_GLOBAL_FLAGS]|=__TANGO_GFLAG_UNPRESS_ADVANCE;
-        }
-        
-        // The string is finished; either clear it out or get ready for
-        // the next one
-        if(done)
-        {
-            if(__Tango_SlotData[dataStart+__TSDIDX_NEXT_STRING]==0)
-            {
-                // No next string; clear it, unless the persistent flag is set.
-                if((flags&TANGO_FLAG_PERSISTENT)==0)
-                    Tango_ClearSlot(__Tango_Data[__TCS_ID]);
-            }
-            else
-                __Tango_BeginAdvancing();
-        }
-    } // End finished
+        __Tango_UpdateActive(speed);
     
     else if(state==__TANGO_STATE_ADVANCING)
+        __Tango_UpdateAdvancing(speed);
+    
+    else if(state==__TANGO_STATE_FINISHED)
+        __Tango_UpdateFinished(flags, speed);
+}
+
+// Updates an active text slot. Renders text characters, runs functions, etc.
+void __Tango_UpdateActive(int speed)
+{
+    int dataStart=__Tango_Data[__TCS_DATA_START];
+    bool ready=true;
+    
+    // First, update scrolling and delay
+    if(__Tango_SlotData[dataStart+__TSDIDX_COUNTER]>0)
     {
-        bool done=false;
-        
-        if(__TANGO_SCROLL_TO_NEXT!=0)
-            done=__Tango_Scroll(speed);
+        __Tango_CountDown(speed);
+        if(__Tango_SlotData[dataStart+__TSDIDX_COUNTER]>0)
+            ready=false;
+    }
+    if(__Tango_SlotData[dataStart+__TSDIDX_SCROLLING]>0)
+    {
+        __Tango_Scroll(speed);
+        if(__Tango_SlotData[dataStart+__TSDIDX_SCROLLING]>0)
+            ready=false;
+    }
+    
+    // If either scrolling or the delay hasn't finished, don't do any more.
+    if(!ready)
+        return;
+    
+    __Tango_Process(speed);
+}
+
+// Updates an advancing text slot. Scrolls the text up and loads
+// the next message when scrolling finishes.
+void __Tango_UpdateAdvancing(int speed)
+{
+    if(__TANGO_SCROLL_TO_NEXT!=0)
+    {
+        if(!__Tango_Scroll(speed))
+            // Not done scrolling
+            return;
+    }
+    
+    int dataStart=__Tango_Data[__TCS_DATA_START];
+    int defStart=__Tango_Data[__TCS_DEF_START];
+    
+    // Load the next message, reset the text position and string state,
+    // and clear the bitmap.
+    Tango_LoadMessage(__Tango_Data[__TCS_ID],
+        __Tango_SlotData[dataStart+__TSDIDX_NEXT_STRING]);
+    __Tango_SlotData[dataStart+__TSDIDX_NEXT_STRING]=0;
+    __Tango_SlotData[dataStart+__TSDIDX_POSITION]=
+        __Tango_GetCurrSlotDefData(__TSDEF_START);
+    __Tango_SlotData[dataStart+__TSDIDX_CHAR_X]=
+        __Tango_SlotDefs[defStart+__TSDEF_X];
+    __Tango_SlotData[dataStart+__TSDIDX_CHAR_Y]=
+        __Tango_SlotDefs[defStart+__TSDEF_Y];
+    __Tango_SlotData[dataStart+__TSDIDX_OFFSET]=0;
+    __Tango_SlotData[dataStart+__TSDIDX_SCROLLING]=0;
+    __Tango_ClearSlotBitmap(__Tango_Data[__TCS_ID]);
+    
+    __Tango_SlotData[dataStart+__TSDIDX_STATE]=__TANGO_STATE_ACTIVE;
+}
+
+// Updates a finished text slot. Counts down the auto advance timer or
+// check if the advance button was pressed, then clears the slot or
+// scroll up to make room for the next message.
+void __Tango_UpdateFinished(int flags, int speed)
+{
+    int dataStart=__Tango_Data[__TCS_DATA_START];
+    bool done=false;
+    
+    if((flags&TANGO_FLAG_AUTO_ADVANCE)!=0)
+    {
+        if(__Tango_SlotData[dataStart+__TSDIDX_COUNTER]>0)
+        {
+            __Tango_CountDown(speed);
+            if(__Tango_SlotData[dataStart+__TSDIDX_COUNTER]==0)
+                done=true;
+        }
         else
             done=true;
+    }
+    else if(__Tango_PressAdvance())
+    {
+        done=true;
+        __Tango_Data[__TDIDX_GLOBAL_FLAGS]|=__TANGO_GFLAG_UNPRESS_ADVANCE;
         
-        if(done)
-        {
-            // Load the next message, reset the text position and string state,
-            // and clear the bitmap.
-            Tango_LoadMessage(__Tango_Data[__TCS_ID],
-                __Tango_SlotData[dataStart+__TSDIDX_NEXT_STRING]);
-            __Tango_SlotData[dataStart+__TSDIDX_NEXT_STRING]=0;
-            __Tango_SlotData[dataStart+__TSDIDX_POSITION]=
-                __Tango_GetCurrSlotDefData(__TSDEF_START);
-            __Tango_SlotData[dataStart+__TSDIDX_CHAR_X]=
-                __Tango_SlotDefs[defStart+__TSDEF_X];
-            __Tango_SlotData[dataStart+__TSDIDX_CHAR_Y]=
-                __Tango_SlotDefs[defStart+__TSDEF_Y];
-            __Tango_SlotData[dataStart+__TSDIDX_OFFSET]=0;
-            __Tango_SlotData[dataStart+__TSDIDX_SCROLLING]=0;
-            __Tango_ClearSlotBitmap(__Tango_Data[__TCS_ID]);
-            
-            __Tango_SlotData[dataStart+__TSDIDX_STATE]=__TANGO_STATE_ACTIVE;
-        }
-    } // End advancing
+        if(__Tango_PressSpeedup())
+            __Tango_SlotData[dataStart+__TSDIDX_IGNORE_SPEED_KEYS]=1;
+        else if(__Tango_PressSuperSpeed())
+            __Tango_SlotData[dataStart+__TSDIDX_IGNORE_SPEED_KEYS]=2;
+    }
     
-    // The "wait 1 frame" state is used when that frame
-    // may really be needed, so it can't be cut short.
-    else if(state==__TANGO_STATE_WAIT_1_FRAME)
-        __Tango_SlotData[dataStart+__TSDIDX_STATE]=__TANGO_STATE_ACTIVE;
+    // The string is finished; either clear it out or get ready for
+    // the next one
+    if(done)
+    {
+        if(__Tango_SlotData[dataStart+__TSDIDX_NEXT_STRING]==0)
+        {
+            // No next string; clear it, unless the persistent flag is set.
+            if((flags&TANGO_FLAG_PERSISTENT)==0)
+                Tango_ClearSlot(__Tango_Data[__TCS_ID]);
+        }
+        else
+            __Tango_BeginAdvancing();
+    }
 }
 
 // Processes characters in the string until it encounters a delay.
@@ -302,13 +365,23 @@ void __Tango_Process(int speed)
         // Space or printable character
         if(character>=' ')
         {
-            lastWasSpace=true;
+            lastWasSpace=true; // TODO: Is that right? Shouldn't it be lastWasSpace=(character==' '); ?
             __Tango_PrintNextChar(dataStart, character, font);
             if((character>' ' || __TANGO_SFX_ON_SPACE!=0) &&
-               !isMenu && speed!=__TANGO_SPEED_INSTANT && !lineByLine)
+               !isMenu && speed!=__TANGO_SPEED_SUPER && !lineByLine)
                 Game->PlaySound(__Tango_GetCurrentSFX());
             position++;
         }
+        
+        else if(character==TANGO_CHAR_NEWLINE)
+        {
+            newLine=true;
+            position++;
+        }
+        
+        // String control code
+        else if(character>0)
+            position+=__Tango_RunStringControlCode(position);
         
         else if(character==__TANGO_SETTER_MARKER)
         {
@@ -344,12 +417,6 @@ void __Tango_Process(int speed)
             // No position increment - may need repeated
         }
         
-        else if(character==TANGO_CHAR_NEWLINE)
-        {
-            newLine=true;
-            position++;
-        }
-        
         else if(character==__TANGO_CHAR_CHOICE)
         {
             if(!isMenu)
@@ -358,7 +425,7 @@ void __Tango_Process(int speed)
                 isMenu=true;
             }
             
-            __Tango_ReadChoice(position, dataStart, styleStart);
+            __Tango_ReadChoice(position, defStart, dataStart, styleStart);
             __Tango_SlotData[dataStart+__TSDIDX_CHAR_X]+=
                 __Tango_Styles[styleStart+TANGO_STYLE_MENU_CURSOR_WIDTH];
             
@@ -379,7 +446,7 @@ void __Tango_Process(int speed)
             __Tango_SlotData[dataStart+__TSDIDX_STATE]=__TANGO_STATE_FINISHED;
             Game->PlaySound(__Tango_Styles[styleStart+TANGO_STYLE_TEXT_END_SFX]);
             if((__Tango_Styles[styleStart+TANGO_STYLE_FLAGS]&TANGO_FLAG_AUTO_ADVANCE)!=0 &&
-               speed!=__TANGO_SPEED_INSTANT)
+               speed!=__TANGO_SPEED_SUPER)
                 __Tango_SlotData[dataStart+__TSDIDX_COUNTER]=__TANGO_AUTO_ADVANCE_TIME;
             break; // Don't check the next character
         }
@@ -401,9 +468,9 @@ void __Tango_Process(int speed)
         if(character>=__TANGO_PRINTABLE_CHAR ||
            (character==' ' && __TANGO_DELAY_ON_SPACE!=0))
         {
-            if(speed!=__TANGO_SPEED_INSTANT && !isMenu && !lineByLine)
+            if(speed!=__TANGO_SPEED_SUPER && !isMenu && !lineByLine)
                 setDelay=true;
-        } // End next character check
+        }
         
         // See if the next character or word is too big to fit
         // on the current line.
@@ -423,7 +490,7 @@ void __Tango_Process(int speed)
             scrolling=__Tango_StartNewLine(isMenu);
             if(scrolling>0)
             {
-                if(isMenu || speed==__TANGO_SPEED_INSTANT)
+                if(isMenu || speed==__TANGO_SPEED_SUPER)
                 {
                     __Tango_SlotData[dataStart+__TSDIDX_OFFSET]+=scrolling;
                     if(isMenu)
@@ -438,7 +505,7 @@ void __Tango_Process(int speed)
             
             if(lineByLine)
                 setDelay=true;
-        }
+        } // end if(newLine)
         
         if(setDelay)
         {
@@ -446,9 +513,10 @@ void __Tango_Process(int speed)
             // interfere with @delay
             __Tango_SlotData[dataStart+__TSDIDX_COUNTER]+=
                 __Tango_GetCurrentSpeed();
-            done=true;
+            if(__Tango_SlotData[dataStart+__TSDIDX_COUNTER]>0)
+                done=true;
         }
-    }
+    } // end while(!done)
     
     // Only play the sound once per line.
     if(lineByLine)
@@ -617,7 +685,7 @@ bool __Tango_Scroll(int speed)
     
     int dataStart=__Tango_Data[__TCS_DATA_START];
     
-    if(speed==__TANGO_SPEED_INSTANT)
+    if(speed==__TANGO_SPEED_SUPER)
     {
         __Tango_SlotData[dataStart+__TSDIDX_OFFSET]+=
             __Tango_SlotData[dataStart+__TSDIDX_SCROLLING];
@@ -654,13 +722,29 @@ bool __Tango_Scroll(int speed)
     }
 }
 
-// Set the string up to advance to the next.
+// Sets the slot up to advance to the next message.
 void __Tango_BeginAdvancing()
 {
     __Tango_SetCurrSlotData(__TSDIDX_STATE, __TANGO_STATE_ADVANCING);
     __Tango_SetCurrSlotData(__TSDIDX_SCROLLING,
                            __Tango_GetCurrStyleData(TANGO_STYLE_TEXT_HEIGHT));
     __Tango_SetCurrSlotData(__TSDIDX_COUNTER, 0);
+}
+
+void Tango_SuspendSlot(int slot)
+{
+    int index=slot*__TANGO_SIZEOF_DATA+__TSDIDX_STATE;
+    int state=__Tango_SlotData[index];
+    if(state==__TANGO_STATE_INACTIVE || state==__TANGO_STATE_RESERVED)
+        return;
+    
+    __Tango_SlotData[index]=(state%__TANGO_SUSPEND)+__TANGO_SUSPEND;
+}
+
+void Tango_ResumeSlot(int slot)
+{
+    int index=slot*__TANGO_SIZEOF_DATA+__TSDIDX_STATE;
+    __Tango_SlotData[index]%=__TANGO_SUSPEND;
 }
 
 void __Tango_UnpressAll()
@@ -697,3 +781,4 @@ void __Tango_UnpressAll()
     Link->InputMap = false;
     Link->PressMap = false;
 }
+

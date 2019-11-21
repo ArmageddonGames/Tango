@@ -24,7 +24,7 @@ ffc script Ojiisan
                 {
                     talking=true;
                     linkAlreadyTalking=true;
-                    Tango_Sync(1);
+                    Tango_Sync(1); // Wait until @sync(1) is reached before continuing
                     item sword=Screen->CreateItem(5);
                     sword->X=Link->X;
                     sword->Y=Link->Y;
@@ -42,3 +42,4 @@ ffc script Ojiisan
         }
     }
 }
+

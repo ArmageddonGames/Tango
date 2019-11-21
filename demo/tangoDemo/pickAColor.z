@@ -40,6 +40,8 @@ ffc script PickAColor
             Tango_AddMenuChoice(i+1, choiceX[i], choiceY[i]);
         
         Tango_ActivateMenu(false);
+        
+        // Show a second string with whatever the cursor is currently on
         while(Tango_MenuIsActive())
         {
             currentChoice=Tango_GetCurrentMenuChoice()-1;
@@ -66,3 +68,4 @@ ffc script PickAColor
             Waitframe();
     }
 }
+

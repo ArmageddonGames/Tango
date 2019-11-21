@@ -1,4 +1,4 @@
-// "Oracle Proportional" extended with an A button icon and
+// "Oracle Proportional" extended with an A button icon
 
 int FONT_ORACLE_EXTENDED[] = {
     TANGO_FONT_BUILTIN_EXTENDED,

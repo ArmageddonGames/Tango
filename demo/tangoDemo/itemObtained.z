@@ -4,6 +4,10 @@ item script ItemObtained
 {
     void run()
     {
+        int slot=Tango_GetFreeSlot(TANGO_SLOT_POPUP);
+        if(slot==TANGO_INVALID)
+            Quit();
+        
         // Item obtained
         // Partial item name
         // Followed by commands to move up, wait, and move back down
@@ -12,10 +16,6 @@ item script ItemObtained
         int movement[]="@while(@greater(@y 130) @inc(@y -3))@delay(120)@while(@less(@y 168) @inc(@y 3))";
         
         this->GetName(itemName);
-        
-        int slot=Tango_GetFreeSlot(TANGO_SLOT_POPUP);
-        if(slot==TANGO_INVALID)
-            Quit();
         
         Tango_ClearSlot(slot);
         
